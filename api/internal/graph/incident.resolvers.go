@@ -33,12 +33,64 @@ func (r *incidentResolver) Owner(ctx context.Context, obj *model.Incident) (*mod
 
 // Assets is the resolver for the assets field.
 func (r *incidentResolver) Assets(ctx context.Context, obj *model.Incident, first *int, after *string) (*model1.AssetConnection, error) {
-	return &model1.AssetConnection{Edges: []*model1.AssetEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
+	var assetIDs []string
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		assetIDs, err = r.IncidentRepo.GetLinkedAssetIDs(ctx, tx, obj.ID)
+		return err
+	})
+	if err != nil || len(assetIDs) == 0 {
+		return &model1.AssetConnection{Edges: []*model1.AssetEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
+	}
+
+	var assets []*model.Asset
+	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		for _, id := range assetIDs {
+			a, err := r.AssetRepo.GetByID(ctx, tx, id)
+			if err != nil {
+				continue
+			}
+			assets = append(assets, a)
+		}
+		return nil
+	})
+
+	edges := make([]*model1.AssetEdge, len(assets))
+	for i, a := range assets {
+		edges[i] = &model1.AssetEdge{Cursor: repository.EncodeCursor(i), Node: a}
+	}
+	return &model1.AssetConnection{Edges: edges, PageInfo: &model1.PageInfo{}, TotalCount: len(assets)}, nil
 }
 
 // Vulnerabilities is the resolver for the vulnerabilities field.
 func (r *incidentResolver) Vulnerabilities(ctx context.Context, obj *model.Incident, first *int, after *string) (*model1.VulnerabilityConnection, error) {
-	return &model1.VulnerabilityConnection{Edges: []*model1.VulnerabilityEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
+	var vulnIDs []string
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		vulnIDs, err = r.IncidentRepo.GetLinkedVulnIDs(ctx, tx, obj.ID)
+		return err
+	})
+	if err != nil || len(vulnIDs) == 0 {
+		return &model1.VulnerabilityConnection{Edges: []*model1.VulnerabilityEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
+	}
+
+	var vulns []*model.Vulnerability
+	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		for _, id := range vulnIDs {
+			v, err := r.VulnRepo.GetByID(ctx, tx, id)
+			if err != nil {
+				continue
+			}
+			vulns = append(vulns, v)
+		}
+		return nil
+	})
+
+	edges := make([]*model1.VulnerabilityEdge, len(vulns))
+	for i, v := range vulns {
+		edges[i] = &model1.VulnerabilityEdge{Cursor: repository.EncodeCursor(i), Node: v}
+	}
+	return &model1.VulnerabilityConnection{Edges: edges, PageInfo: &model1.PageInfo{}, TotalCount: len(vulns)}, nil
 }
 
 // Actions is the resolver for the actions field.

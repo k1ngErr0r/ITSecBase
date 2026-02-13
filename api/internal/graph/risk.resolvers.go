@@ -282,7 +282,33 @@ func (r *riskResolver) LastReviewedBy(ctx context.Context, obj *model.Risk) (*mo
 
 // Assets is the resolver for the assets field.
 func (r *riskResolver) Assets(ctx context.Context, obj *model.Risk, first *int, after *string) (*model1.AssetConnection, error) {
-	return &model1.AssetConnection{Edges: []*model1.AssetEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
+	var assetIDs []string
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		assetIDs, err = r.RiskRepo.GetLinkedAssetIDs(ctx, tx, obj.ID)
+		return err
+	})
+	if err != nil || len(assetIDs) == 0 {
+		return &model1.AssetConnection{Edges: []*model1.AssetEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
+	}
+
+	var assets []*model.Asset
+	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		for _, id := range assetIDs {
+			a, err := r.AssetRepo.GetByID(ctx, tx, id)
+			if err != nil {
+				continue
+			}
+			assets = append(assets, a)
+		}
+		return nil
+	})
+
+	edges := make([]*model1.AssetEdge, len(assets))
+	for i, a := range assets {
+		edges[i] = &model1.AssetEdge{Cursor: repository.EncodeCursor(i), Node: a}
+	}
+	return &model1.AssetConnection{Edges: edges, PageInfo: &model1.PageInfo{}, TotalCount: len(assets)}, nil
 }
 
 // Treatments is the resolver for the treatments field.
@@ -298,7 +324,28 @@ func (r *riskResolver) Treatments(ctx context.Context, obj *model.Risk) ([]*mode
 
 // Controls is the resolver for the controls field.
 func (r *riskResolver) Controls(ctx context.Context, obj *model.Risk) ([]*model.OrgIsoControl, error) {
-	return []*model.OrgIsoControl{}, nil
+	var controlIDs []string
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		controlIDs, err = r.RiskRepo.GetLinkedControlIDs(ctx, tx, obj.ID)
+		return err
+	})
+	if err != nil || len(controlIDs) == 0 {
+		return []*model.OrgIsoControl{}, nil
+	}
+
+	var controls []*model.OrgIsoControl
+	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		for _, id := range controlIDs {
+			c, err := r.IsoControlRepo.GetOrgControlByIsoControlID(ctx, tx, id)
+			if err != nil {
+				continue
+			}
+			controls = append(controls, c)
+		}
+		return nil
+	})
+	return controls, err
 }
 
 // Comments is the resolver for the comments field.

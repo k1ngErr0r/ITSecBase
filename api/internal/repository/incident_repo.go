@@ -242,6 +242,42 @@ func (r *IncidentRepo) CountSLABreaches(ctx context.Context, tx pgx.Tx) (int, er
 	return count, err
 }
 
+func (r *IncidentRepo) GetLinkedAssetIDs(ctx context.Context, tx pgx.Tx, incidentID string) ([]string, error) {
+	rows, err := tx.Query(ctx, `SELECT asset_id FROM incident_assets WHERE incident_id = $1`, incidentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+func (r *IncidentRepo) GetLinkedVulnIDs(ctx context.Context, tx pgx.Tx, incidentID string) ([]string, error) {
+	rows, err := tx.Query(ctx, `SELECT vulnerability_id FROM incident_vulnerabilities WHERE incident_id = $1`, incidentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 type IncidentFilter struct {
 	Status       *string
 	ImpactRating *string

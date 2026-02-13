@@ -171,6 +171,24 @@ func (r *DrPlanRepo) LinkAsset(ctx context.Context, tx pgx.Tx, planID, assetID s
 	return err
 }
 
+func (r *DrPlanRepo) GetLinkedAssetIDs(ctx context.Context, tx pgx.Tx, planID string) ([]string, error) {
+	rows, err := tx.Query(ctx, `SELECT asset_id FROM dr_plan_assets WHERE dr_plan_id = $1`, planID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 type DrPlanFilter struct {
 	Status *string
 	Search *string

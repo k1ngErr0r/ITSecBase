@@ -275,6 +275,42 @@ func (r *RiskRepo) GetHeatmapData(ctx context.Context, tx pgx.Tx) ([]HeatmapCell
 	return cells, nil
 }
 
+func (r *RiskRepo) GetLinkedAssetIDs(ctx context.Context, tx pgx.Tx, riskID string) ([]string, error) {
+	rows, err := tx.Query(ctx, `SELECT asset_id FROM risk_assets WHERE risk_id = $1`, riskID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+func (r *RiskRepo) GetLinkedControlIDs(ctx context.Context, tx pgx.Tx, riskID string) ([]string, error) {
+	rows, err := tx.Query(ctx, `SELECT iso_control_id FROM risk_controls WHERE risk_id = $1`, riskID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 type RiskFilter struct {
 	Status   *string
 	Category *string
