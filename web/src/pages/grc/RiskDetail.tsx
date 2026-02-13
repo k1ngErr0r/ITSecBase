@@ -96,19 +96,20 @@ const RISK_DETAIL_QUERY = graphql`
 const UPDATE_RISK_MUTATION = graphql`
   mutation RiskDetailUpdateRiskMutation($id: ID!, $input: UpdateRiskInput!) {
     updateRisk(id: $id, input: $input) {
-      risk {
+      id
+      title
+      description
+      scenario
+      category
+      source
+      status
+      inherentLikelihood
+      inherentImpact
+      residualLikelihood
+      residualImpact
+      owner {
         id
-        title
-        description
-        scenario
-        category
-        source
-        status
-        inherentLikelihood
-        inherentImpact
-        residualLikelihood
-        residualImpact
-        ownerId
+        displayName
       }
     }
   }
@@ -117,17 +118,15 @@ const UPDATE_RISK_MUTATION = graphql`
 const ADD_TREATMENT_MUTATION = graphql`
   mutation RiskDetailAddTreatmentMutation($riskId: ID!, $input: AddRiskTreatmentInput!) {
     addRiskTreatment(riskId: $riskId, input: $input) {
-      treatment {
+      id
+      action
+      responsible {
         id
-        action
-        responsible {
-          id
-          displayName
-        }
-        deadline
-        status
-        createdAt
+        displayName
       }
+      deadline
+      status
+      createdAt
     }
   }
 `
@@ -135,44 +134,38 @@ const ADD_TREATMENT_MUTATION = graphql`
 const UPDATE_TREATMENT_MUTATION = graphql`
   mutation RiskDetailUpdateTreatmentMutation($id: ID!, $input: UpdateRiskTreatmentInput!) {
     updateRiskTreatment(id: $id, input: $input) {
-      treatment {
-        id
-        status
-      }
+      id
+      status
     }
   }
 `
 
 const ADD_COMMENT_MUTATION = graphql`
-  mutation RiskDetailAddCommentMutation($riskId: ID!, $body: String!) {
-    addRiskComment(riskId: $riskId, body: $body) {
-      comment {
+  mutation RiskDetailAddCommentMutation($input: AddCommentInput!) {
+    addComment(input: $input) {
+      id
+      body
+      author {
         id
-        body
-        author {
-          id
-          displayName
-        }
-        createdAt
+        displayName
       }
+      createdAt
     }
   }
 `
 
 const UPLOAD_EVIDENCE_MUTATION = graphql`
-  mutation RiskDetailUploadEvidenceMutation($riskId: ID!, $file: Upload!) {
-    uploadRiskEvidence(riskId: $riskId, file: $file) {
-      evidence {
+  mutation RiskDetailUploadEvidenceMutation($input: AddEvidenceInput!) {
+    addEvidence(input: $input) {
+      id
+      fileName
+      fileSize
+      contentType
+      uploadedBy {
         id
-        fileName
-        fileSize
-        contentType
-        uploadedBy {
-          id
-          displayName
-        }
-        createdAt
+        displayName
       }
+      createdAt
     }
   }
 `
@@ -313,14 +306,14 @@ function RiskDetailContent() {
 
   const handleAddComment = (body: string) => {
     commitAddComment({
-      variables: { riskId: risk.id, body },
+      variables: { input: { entityType: 'risk', entityId: risk.id, body } },
       onError: (err) => console.error('Failed to add comment:', err),
     })
   }
 
   const handleUploadEvidence = (file: File) => {
     commitUploadEvidence({
-      variables: { riskId: risk.id, file },
+      variables: { input: { entityType: 'risk', entityId: risk.id, fileName: file.name, fileSize: file.size, contentType: file.type } },
       onError: (err) => console.error('Failed to upload evidence:', err),
     })
   }

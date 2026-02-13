@@ -120,7 +120,7 @@ func (r *Resolver) CreateAsset(ctx context.Context, input CreateAssetInput) (*mo
 		a.Tags = input.Tags
 	}
 
-	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.AssetRepo.Create(ctx, tx, a)
 	})
 	return a, err

@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jmcintyre/secbase/api/internal/auth"
@@ -255,13 +256,13 @@ type UpdateRiskInput struct {
 type CreateTreatmentInput struct {
 	Action        string       `json:"action"`
 	ResponsibleID *string      `json:"responsibleId"`
-	Deadline      *interface{} `json:"deadline"`
+	Deadline      *time.Time   `json:"deadline"`
 	Status        *string      `json:"status"`
 }
 
 type UpdateTreatmentInput struct {
 	Action        *string      `json:"action"`
 	ResponsibleID *string      `json:"responsibleId"`
-	Deadline      *interface{} `json:"deadline"`
+	Deadline      *time.Time   `json:"deadline"`
 	Status        *string      `json:"status"`
 }

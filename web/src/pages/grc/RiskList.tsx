@@ -57,18 +57,16 @@ const RISK_LIST_QUERY = graphql`
 const CREATE_RISK_MUTATION = graphql`
   mutation RiskListCreateRiskMutation($input: CreateRiskInput!) {
     createRisk(input: $input) {
-      risk {
+      id
+      title
+      category
+      status
+      inherentLikelihood
+      inherentImpact
+      calculatedInherentLevel
+      owner {
         id
-        title
-        category
-        status
-        inherentLikelihood
-        inherentImpact
-        calculatedInherentLevel
-        owner {
-          id
-          displayName
-        }
+        displayName
       }
     }
   }

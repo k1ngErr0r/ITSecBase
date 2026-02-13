@@ -49,20 +49,18 @@ const INCIDENT_LIST_QUERY = graphql`
 const CREATE_INCIDENT_MUTATION = graphql`
   mutation IncidentListCreateIncidentMutation($input: CreateIncidentInput!) {
     createIncident(input: $input) {
-      incident {
+      id
+      name
+      area
+      impactRating
+      status
+      classification
+      owner {
         id
-        name
-        area
-        impactRating
-        status
-        classification
-        owner {
-          id
-          displayName
-        }
-        openedAt
-        slaDeadline
+        displayName
       }
+      openedAt
+      slaDeadline
     }
   }
 `

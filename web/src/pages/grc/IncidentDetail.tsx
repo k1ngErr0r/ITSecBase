@@ -110,13 +110,11 @@ const INCIDENT_DETAIL_QUERY = graphql`
 const UPDATE_INCIDENT_STATUS_MUTATION = graphql`
   mutation IncidentDetailUpdateStatusMutation($id: ID!, $input: UpdateIncidentInput!) {
     updateIncident(id: $id, input: $input) {
-      incident {
-        id
-        status
-        containedAt
-        resolvedAt
-        closedAt
-      }
+      id
+      status
+      containedAt
+      resolvedAt
+      closedAt
     }
   }
 `
@@ -124,18 +122,16 @@ const UPDATE_INCIDENT_STATUS_MUTATION = graphql`
 const ADD_ACTION_MUTATION = graphql`
   mutation IncidentDetailAddActionMutation($incidentId: ID!, $input: AddIncidentActionInput!) {
     addIncidentAction(incidentId: $incidentId, input: $input) {
-      action {
+      id
+      actionType
+      description
+      owner {
         id
-        actionType
-        description
-        owner {
-          id
-          displayName
-        }
-        dueDate
-        status
-        createdAt
+        displayName
       }
+      dueDate
+      status
+      createdAt
     }
   }
 `
@@ -143,44 +139,38 @@ const ADD_ACTION_MUTATION = graphql`
 const UPDATE_ACTION_MUTATION = graphql`
   mutation IncidentDetailUpdateActionMutation($id: ID!, $input: UpdateIncidentActionInput!) {
     updateIncidentAction(id: $id, input: $input) {
-      action {
-        id
-        status
-      }
+      id
+      status
     }
   }
 `
 
 const ADD_COMMENT_MUTATION = graphql`
-  mutation IncidentDetailAddCommentMutation($incidentId: ID!, $body: String!) {
-    addIncidentComment(incidentId: $incidentId, body: $body) {
-      comment {
+  mutation IncidentDetailAddCommentMutation($input: AddCommentInput!) {
+    addComment(input: $input) {
+      id
+      body
+      author {
         id
-        body
-        author {
-          id
-          displayName
-        }
-        createdAt
+        displayName
       }
+      createdAt
     }
   }
 `
 
 const UPLOAD_EVIDENCE_MUTATION = graphql`
-  mutation IncidentDetailUploadEvidenceMutation($incidentId: ID!, $file: Upload!) {
-    uploadIncidentEvidence(incidentId: $incidentId, file: $file) {
-      evidence {
+  mutation IncidentDetailUploadEvidenceMutation($input: AddEvidenceInput!) {
+    addEvidence(input: $input) {
+      id
+      fileName
+      fileSize
+      contentType
+      uploadedBy {
         id
-        fileName
-        fileSize
-        contentType
-        uploadedBy {
-          id
-          displayName
-        }
-        createdAt
+        displayName
       }
+      createdAt
     }
   }
 `
@@ -333,14 +323,14 @@ function IncidentDetailContent() {
 
   const handleAddComment = (body: string) => {
     commitAddComment({
-      variables: { incidentId: incident.id, body },
+      variables: { input: { entityType: 'incident', entityId: incident.id, body } },
       onError: (err) => console.error('Failed to add comment:', err),
     })
   }
 
   const handleUploadEvidence = (file: File) => {
     commitUploadEvidence({
-      variables: { incidentId: incident.id, file },
+      variables: { input: { entityType: 'incident', entityId: incident.id, fileName: file.name, fileSize: file.size, contentType: file.type } },
       onError: (err) => console.error('Failed to upload evidence:', err),
     })
   }

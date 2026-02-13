@@ -88,7 +88,7 @@ func (r *Resolver) Login(ctx context.Context, email, password string, totpCode *
 
 		accessToken, err := auth.GenerateAccessToken(
 			user.ID, user.OrgID, user.Email, roles,
-			r.Config.JWT.Secret, r.Config.JWT.AccessExpiry,
+			r.Config.JWT.Secret, r.Config.JWT.AccessTokenExpiry,
 		)
 		if err != nil {
 			return fmt.Errorf("generate access token: %w", err)
@@ -103,7 +103,7 @@ func (r *Resolver) Login(ctx context.Context, email, password string, totpCode *
 			ID:        uuid.New().String(),
 			UserID:    user.ID,
 			TokenHash: hashedRefresh,
-			ExpiresAt: time.Now().Add(r.Config.JWT.RefreshExpiry),
+			ExpiresAt: time.Now().Add(r.Config.JWT.RefreshTokenExpiry),
 		}
 		if err := r.UserRepo.StoreRefreshToken(ctx, tx, refreshToken); err != nil {
 			return fmt.Errorf("store refresh token: %w", err)
@@ -163,7 +163,7 @@ func (r *Resolver) RefreshToken(ctx context.Context, token string) (*AuthPayload
 
 		accessToken, err := auth.GenerateAccessToken(
 			user.ID, user.OrgID, user.Email, roles,
-			r.Config.JWT.Secret, r.Config.JWT.AccessExpiry,
+			r.Config.JWT.Secret, r.Config.JWT.AccessTokenExpiry,
 		)
 		if err != nil {
 			return err
@@ -178,7 +178,7 @@ func (r *Resolver) RefreshToken(ctx context.Context, token string) (*AuthPayload
 			ID:        uuid.New().String(),
 			UserID:    user.ID,
 			TokenHash: hashedRefresh,
-			ExpiresAt: time.Now().Add(r.Config.JWT.RefreshExpiry),
+			ExpiresAt: time.Now().Add(r.Config.JWT.RefreshTokenExpiry),
 		}
 		if err := r.UserRepo.StoreRefreshToken(ctx, tx, newRT); err != nil {
 			return err
@@ -211,21 +211,24 @@ func (r *Resolver) SetupTotp(ctx context.Context) (*TotpSetupPayload, error) {
 			return err
 		}
 
-		key, err := auth.GenerateTOTPSecret(user.Email)
+		secret, provisioningURL, err := auth.GenerateTOTPSecret(user.Email)
 		if err != nil {
 			return err
 		}
 
-		backupCodes := auth.GenerateBackupCodes(8)
+		backupCodes, err := auth.GenerateBackupCodes(8)
+		if err != nil {
+			return err
+		}
 
 		// Store the secret (not yet enabled until verified)
-		if err := r.UserRepo.UpdateTOTP(ctx, tx, user.ID, key.Secret(), false); err != nil {
+		if err := r.UserRepo.UpdateTOTP(ctx, tx, user.ID, secret, false); err != nil {
 			return err
 		}
 
 		result = &TotpSetupPayload{
-			Secret:          key.Secret(),
-			ProvisioningURL: key.URL(),
+			Secret:          secret,
+			ProvisioningURL: provisioningURL,
 			BackupCodes:     backupCodes,
 		}
 		return nil
