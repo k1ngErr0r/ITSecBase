@@ -17,183 +17,57 @@ import (
 
 // Members is the resolver for the members field.
 func (r *groupResolver) Members(ctx context.Context, obj *model.Group, first *int, after *string) (*model1.UserConnection, error) {
-	panic(fmt.Errorf("not implemented: Members - members"))
-}
-
-// CreateUser is the resolver for the createUser field.
-func (r *mutationResolver) CreateUser(ctx context.Context, input model1.CreateUserInput) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: CreateUser - createUser"))
-}
-
-// UpdateUser is the resolver for the updateUser field.
-func (r *mutationResolver) UpdateUser(ctx context.Context, id string, input model1.UpdateUserInput) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: UpdateUser - updateUser"))
-}
-
-// DisableUser is the resolver for the disableUser field.
-func (r *mutationResolver) DisableUser(ctx context.Context, id string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: DisableUser - disableUser"))
-}
-
-// EnableUser is the resolver for the enableUser field.
-func (r *mutationResolver) EnableUser(ctx context.Context, id string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: EnableUser - enableUser"))
-}
-
-// CreateGroup is the resolver for the createGroup field.
-func (r *mutationResolver) CreateGroup(ctx context.Context, input model1.CreateGroupInput) (*model.Group, error) {
-	panic(fmt.Errorf("not implemented: CreateGroup - createGroup"))
-}
-
-// UpdateGroup is the resolver for the updateGroup field.
-func (r *mutationResolver) UpdateGroup(ctx context.Context, id string, input model1.UpdateGroupInput) (*model.Group, error) {
-	panic(fmt.Errorf("not implemented: UpdateGroup - updateGroup"))
-}
-
-// DeleteGroup is the resolver for the deleteGroup field.
-func (r *mutationResolver) DeleteGroup(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteGroup - deleteGroup"))
-}
-
-// AddUserToGroup is the resolver for the addUserToGroup field.
-func (r *mutationResolver) AddUserToGroup(ctx context.Context, userID string, groupID string) (bool, error) {
-	panic(fmt.Errorf("not implemented: AddUserToGroup - addUserToGroup"))
-}
-
-// RemoveUserFromGroup is the resolver for the removeUserFromGroup field.
-func (r *mutationResolver) RemoveUserFromGroup(ctx context.Context, userID string, groupID string) (bool, error) {
-	panic(fmt.Errorf("not implemented: RemoveUserFromGroup - removeUserFromGroup"))
-}
-
-// ChangePassword is the resolver for the changePassword field.
-func (r *mutationResolver) ChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error) {
-	panic(fmt.Errorf("not implemented: ChangePassword - changePassword"))
-}
-
-// UpdateProfile is the resolver for the updateProfile field.
-func (r *mutationResolver) UpdateProfile(ctx context.Context, input model1.UpdateProfileInput) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: UpdateProfile - updateProfile"))
-}
-
-// Me is the resolver for the me field.
-func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Me - me"))
-}
-
-// Users is the resolver for the users field.
-func (r *queryResolver) Users(ctx context.Context, first *int, after *string, filter *model1.UserFilter) (*model1.UserConnection, error) {
-	panic(fmt.Errorf("not implemented: Users - users"))
-}
-
-// Groups is the resolver for the groups field.
-func (r *queryResolver) Groups(ctx context.Context, first *int, after *string) (*model1.GroupConnection, error) {
-	panic(fmt.Errorf("not implemented: Groups - groups"))
-}
-
-// Groups is the resolver for the groups field.
-func (r *userResolver) Groups(ctx context.Context, obj *model.User, first *int, after *string) (*model1.GroupConnection, error) {
-	panic(fmt.Errorf("not implemented: Groups - groups"))
-}
-
-// Group returns GroupResolver implementation.
-func (r *Resolver) Group() GroupResolver { return &groupResolver{r} }
-
-// User returns UserResolver implementation.
-func (r *Resolver) User() UserResolver { return &userResolver{r} }
-
-type groupResolver struct{ *Resolver }
-type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *Resolver) Me(ctx context.Context) (*model.User, error) {
-	userID, ok := auth.UserIDFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("authentication required")
-	}
-
-	var user *model.User
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		user, err = r.UserRepo.GetByID(ctx, tx, userID)
-		return err
-	})
-	return user, err
-}
-
-type UserConnection struct {
-	Edges      []*UserEdge `json:"edges"`
-	PageInfo   *PageInfo   `json:"pageInfo"`
-	TotalCount int         `json:"totalCount"`
-}
-type UserEdge struct {
-	Cursor string      `json:"cursor"`
-	Node   *model.User `json:"node"`
-}
-
-func (r *Resolver) Users(ctx context.Context, first *int, after *string, filter *repository.UserFilter) (*UserConnection, error) {
 	params := paginationParams(first, after)
-
 	var users []*model.User
 	var pr repository.PaginationResult
 
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		users, pr, err = r.UserRepo.List(ctx, tx, params, filter)
+		users, pr, err = r.UserRepo.GetGroupMembers(ctx, tx, obj.ID, params)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	edges := make([]*UserEdge, len(users))
+	edges := make([]*model1.UserEdge, len(users))
 	for i, u := range users {
-		edges[i] = &UserEdge{
-			Cursor: repository.EncodeCursor(i),
-			Node:   u,
-		}
+		edges[i] = &model1.UserEdge{Cursor: repository.EncodeCursor(i), Node: u}
 	}
-
-	return &UserConnection{
-		Edges:      edges,
-		PageInfo:   toPageInfo(pr),
-		TotalCount: pr.TotalCount,
-	}, nil
+	return &model1.UserConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
 }
-func (r *Resolver) CreateUser(ctx context.Context, email, password, displayName string, jobTitle, department *string, groupIDs []string) (*model.User, error) {
+
+// CreateUser is the resolver for the createUser field.
+func (r *mutationResolver) CreateUser(ctx context.Context, input model1.CreateUserInput) (*model.User, error) {
 	orgID, ok := auth.OrgIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
-	hashed, err := auth.HashPassword(password)
+	hashed, err := auth.HashPassword(input.Password)
 	if err != nil {
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
 	user := &model.User{
 		OrgID:        orgID,
-		Email:        email,
+		Email:        input.Email,
 		PasswordHash: hashed,
-		DisplayName:  displayName,
+		DisplayName:  input.DisplayName,
 		Status:       "active",
 	}
-	if jobTitle != nil {
-		user.JobTitle = *jobTitle
+	if input.JobTitle != nil {
+		user.JobTitle = *input.JobTitle
 	}
-	if department != nil {
-		user.Department = *department
+	if input.Department != nil {
+		user.Department = *input.Department
 	}
 
 	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		if err := r.UserRepo.Create(ctx, tx, user); err != nil {
 			return err
 		}
-		for _, gid := range groupIDs {
+		for _, gid := range input.GroupIds {
 			if err := r.UserRepo.AddUserToGroup(ctx, tx, user.ID, gid); err != nil {
 				return err
 			}
@@ -205,7 +79,9 @@ func (r *Resolver) CreateUser(ctx context.Context, email, password, displayName 
 	}
 	return user, nil
 }
-func (r *Resolver) UpdateUser(ctx context.Context, id string, displayName, jobTitle, department, status *string) (*model.User, error) {
+
+// UpdateUser is the resolver for the updateUser field.
+func (r *mutationResolver) UpdateUser(ctx context.Context, id string, input model1.UpdateUserInput) (*model.User, error) {
 	var user *model.User
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
@@ -213,31 +89,106 @@ func (r *Resolver) UpdateUser(ctx context.Context, id string, displayName, jobTi
 		if err != nil {
 			return err
 		}
-		if displayName != nil {
-			user.DisplayName = *displayName
+		if input.DisplayName != nil {
+			user.DisplayName = *input.DisplayName
 		}
-		if jobTitle != nil {
-			user.JobTitle = *jobTitle
+		if input.JobTitle != nil {
+			user.JobTitle = *input.JobTitle
 		}
-		if department != nil {
-			user.Department = *department
+		if input.Department != nil {
+			user.Department = *input.Department
 		}
-		if status != nil {
-			user.Status = *status
+		if input.Status != nil {
+			user.Status = *input.Status
 		}
 		return r.UserRepo.Update(ctx, tx, user)
 	})
 	return user, err
 }
-func (r *Resolver) DisableUser(ctx context.Context, id string) (*model.User, error) {
+
+// DisableUser is the resolver for the disableUser field.
+func (r *mutationResolver) DisableUser(ctx context.Context, id string) (*model.User, error) {
 	disabled := "disabled"
-	return r.UpdateUser(ctx, id, nil, nil, nil, &disabled)
+	return r.UpdateUser(ctx, id, model1.UpdateUserInput{Status: &disabled})
 }
-func (r *Resolver) EnableUser(ctx context.Context, id string) (*model.User, error) {
+
+// EnableUser is the resolver for the enableUser field.
+func (r *mutationResolver) EnableUser(ctx context.Context, id string) (*model.User, error) {
 	active := "active"
-	return r.UpdateUser(ctx, id, nil, nil, nil, &active)
+	return r.UpdateUser(ctx, id, model1.UpdateUserInput{Status: &active})
 }
-func (r *Resolver) ChangePassword(ctx context.Context, currentPassword, newPassword string) (bool, error) {
+
+// CreateGroup is the resolver for the createGroup field.
+func (r *mutationResolver) CreateGroup(ctx context.Context, input model1.CreateGroupInput) (*model.Group, error) {
+	orgID, ok := auth.OrgIDFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("authentication required")
+	}
+
+	g := &model.Group{
+		OrgID:       orgID,
+		Name:        input.Name,
+		Permissions: input.Permissions,
+	}
+	if input.Description != nil {
+		g.Description = *input.Description
+	}
+
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		return r.UserRepo.CreateGroup(ctx, tx, g)
+	})
+	return g, err
+}
+
+// UpdateGroup is the resolver for the updateGroup field.
+func (r *mutationResolver) UpdateGroup(ctx context.Context, id string, input model1.UpdateGroupInput) (*model.Group, error) {
+	var g *model.Group
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		g, err = r.UserRepo.GetGroupByID(ctx, tx, id)
+		if err != nil {
+			return err
+		}
+		if input.Name != nil {
+			g.Name = *input.Name
+		}
+		if input.Description != nil {
+			g.Description = *input.Description
+		}
+		if input.Permissions != nil {
+			g.Permissions = input.Permissions
+		}
+		return r.UserRepo.UpdateGroup(ctx, tx, g)
+	})
+	return g, err
+}
+
+// DeleteGroup is the resolver for the deleteGroup field.
+func (r *mutationResolver) DeleteGroup(ctx context.Context, id string) (bool, error) {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		return r.UserRepo.DeleteGroup(ctx, tx, id)
+	})
+	return err == nil, err
+}
+
+// AddUserToGroup is the resolver for the addUserToGroup field.
+func (r *mutationResolver) AddUserToGroup(ctx context.Context, userID string, groupID string) (bool, error) {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		return r.UserRepo.AddUserToGroup(ctx, tx, userID, groupID)
+	})
+	return err == nil, err
+}
+
+// RemoveUserFromGroup is the resolver for the removeUserFromGroup field.
+func (r *mutationResolver) RemoveUserFromGroup(ctx context.Context, userID string, groupID string) (bool, error) {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		return r.UserRepo.RemoveUserFromGroup(ctx, tx, userID, groupID)
+	})
+	return err == nil, err
+}
+
+// ChangePassword is the resolver for the changePassword field.
+func (r *mutationResolver) ChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error) {
 	userID, ok := auth.UserIDFromContext(ctx)
 	if !ok {
 		return false, fmt.Errorf("authentication required")
@@ -263,7 +214,6 @@ func (r *Resolver) ChangePassword(ctx context.Context, currentPassword, newPassw
 			return err
 		}
 
-		// Revoke all refresh tokens on password change
 		return r.UserRepo.RevokeAllUserRefreshTokens(ctx, tx, userID)
 	})
 	if err != nil {
@@ -271,7 +221,9 @@ func (r *Resolver) ChangePassword(ctx context.Context, currentPassword, newPassw
 	}
 	return true, nil
 }
-func (r *Resolver) UpdateProfile(ctx context.Context, displayName, jobTitle, department, profilePictureURL *string) (*model.User, error) {
+
+// UpdateProfile is the resolver for the updateProfile field.
+func (r *mutationResolver) UpdateProfile(ctx context.Context, input model1.UpdateProfileInput) (*model.User, error) {
 	userID, ok := auth.UserIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
@@ -284,36 +236,74 @@ func (r *Resolver) UpdateProfile(ctx context.Context, displayName, jobTitle, dep
 		if err != nil {
 			return err
 		}
-		if displayName != nil {
-			user.DisplayName = *displayName
+		if input.DisplayName != nil {
+			user.DisplayName = *input.DisplayName
 		}
-		if jobTitle != nil {
-			user.JobTitle = *jobTitle
+		if input.JobTitle != nil {
+			user.JobTitle = *input.JobTitle
 		}
-		if department != nil {
-			user.Department = *department
+		if input.Department != nil {
+			user.Department = *input.Department
 		}
-		if profilePictureURL != nil {
-			user.ProfilePictureURL = *profilePictureURL
+		if input.ProfilePictureURL != nil {
+			user.ProfilePictureURL = *input.ProfilePictureURL
 		}
 		return r.UserRepo.Update(ctx, tx, user)
 	})
 	return user, err
 }
 
-type GroupConnection struct {
-	Edges      []*GroupEdge `json:"edges"`
-	PageInfo   *PageInfo    `json:"pageInfo"`
-	TotalCount int          `json:"totalCount"`
-}
-type GroupEdge struct {
-	Cursor string       `json:"cursor"`
-	Node   *model.Group `json:"node"`
+// Me is the resolver for the me field.
+func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
+	userID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("authentication required")
+	}
+
+	var user *model.User
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		user, err = r.UserRepo.GetByID(ctx, tx, userID)
+		return err
+	})
+	return user, err
 }
 
-func (r *Resolver) Groups(ctx context.Context, first *int, after *string) (*GroupConnection, error) {
+// Users is the resolver for the users field.
+func (r *queryResolver) Users(ctx context.Context, first *int, after *string, filter *model1.UserFilter) (*model1.UserConnection, error) {
 	params := paginationParams(first, after)
 
+	var repoFilter *repository.UserFilter
+	if filter != nil {
+		repoFilter = &repository.UserFilter{
+			Status:  filter.Status,
+			Search:  filter.Search,
+			GroupID: filter.GroupID,
+		}
+	}
+
+	var users []*model.User
+	var pr repository.PaginationResult
+
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		users, pr, err = r.UserRepo.List(ctx, tx, params, repoFilter)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	edges := make([]*model1.UserEdge, len(users))
+	for i, u := range users {
+		edges[i] = &model1.UserEdge{Cursor: repository.EncodeCursor(i), Node: u}
+	}
+	return &model1.UserConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
+}
+
+// Groups is the resolver for the groups field.
+func (r *queryResolver) Groups(ctx context.Context, first *int, after *string) (*model1.GroupConnection, error) {
+	params := paginationParams(first, after)
 	var groups []*model.Group
 	var pr repository.PaginationResult
 
@@ -326,106 +316,41 @@ func (r *Resolver) Groups(ctx context.Context, first *int, after *string) (*Grou
 		return nil, err
 	}
 
-	edges := make([]*GroupEdge, len(groups))
+	edges := make([]*model1.GroupEdge, len(groups))
 	for i, g := range groups {
-		edges[i] = &GroupEdge{
-			Cursor: repository.EncodeCursor(i),
-			Node:   g,
-		}
+		edges[i] = &model1.GroupEdge{Cursor: repository.EncodeCursor(i), Node: g}
 	}
+	return &model1.GroupConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
+}
 
-	return &GroupConnection{
-		Edges:      edges,
-		PageInfo:   toPageInfo(pr),
-		TotalCount: pr.TotalCount,
-	}, nil
-}
-func (r *Resolver) CreateGroup(ctx context.Context, name string, description *string, permissions []string) (*model.Group, error) {
-	orgID, ok := auth.OrgIDFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("authentication required")
-	}
-
-	g := &model.Group{
-		OrgID:       orgID,
-		Name:        name,
-		Permissions: permissions,
-	}
-	if description != nil {
-		g.Description = *description
-	}
-
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		return r.UserRepo.CreateGroup(ctx, tx, g)
-	})
-	return g, err
-}
-func (r *Resolver) UpdateGroup(ctx context.Context, id string, name, description *string, permissions []string) (*model.Group, error) {
-	var g *model.Group
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		g, err = r.UserRepo.GetGroupByID(ctx, tx, id)
-		if err != nil {
-			return err
-		}
-		if name != nil {
-			g.Name = *name
-		}
-		if description != nil {
-			g.Description = *description
-		}
-		if permissions != nil {
-			g.Permissions = permissions
-		}
-		return r.UserRepo.UpdateGroup(ctx, tx, g)
-	})
-	return g, err
-}
-func (r *Resolver) DeleteGroup(ctx context.Context, id string) (bool, error) {
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		return r.UserRepo.DeleteGroup(ctx, tx, id)
-	})
-	return err == nil, err
-}
-func (r *Resolver) AddUserToGroup(ctx context.Context, userID, groupID string) (bool, error) {
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		return r.UserRepo.AddUserToGroup(ctx, tx, userID, groupID)
-	})
-	return err == nil, err
-}
-func (r *Resolver) RemoveUserFromGroup(ctx context.Context, userID, groupID string) (bool, error) {
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		return r.UserRepo.RemoveUserFromGroup(ctx, tx, userID, groupID)
-	})
-	return err == nil, err
-}
-func (r *Resolver) UserGroups(ctx context.Context, user *model.User, first *int, after *string) (*GroupConnection, error) {
-	params := paginationParams(first, after)
-
+// Groups is the resolver for the groups field.
+func (r *userResolver) Groups(ctx context.Context, obj *model.User, first *int, after *string) (*model1.GroupConnection, error) {
 	var groups []*model.Group
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		groups, err = r.UserRepo.GetUserGroups(ctx, tx, user.ID)
+		groups, err = r.UserRepo.GetUserGroups(ctx, tx, obj.ID)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	// Simple conversion (no pagination needed for user's groups typically)
-	edges := make([]*GroupEdge, len(groups))
+	edges := make([]*model1.GroupEdge, len(groups))
 	for i, g := range groups {
-		edges[i] = &GroupEdge{
-			Cursor: repository.EncodeCursor(i),
-			Node:   g,
-		}
+		edges[i] = &model1.GroupEdge{Cursor: repository.EncodeCursor(i), Node: g}
 	}
-
-	pi := &PageInfo{HasNextPage: false, HasPreviousPage: false}
-	_ = params // satisfy usage
-	return &GroupConnection{
+	return &model1.GroupConnection{
 		Edges:      edges,
-		PageInfo:   pi,
+		PageInfo:   &model1.PageInfo{},
 		TotalCount: len(groups),
 	}, nil
 }
+
+// Group returns GroupResolver implementation.
+func (r *Resolver) Group() GroupResolver { return &groupResolver{r} }
+
+// User returns UserResolver implementation.
+func (r *Resolver) User() UserResolver { return &userResolver{r} }
+
+type groupResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }

@@ -12,95 +12,25 @@ import (
 	"github.com/jmcintyre/secbase/api/internal/auth"
 	model1 "github.com/jmcintyre/secbase/api/internal/graph/model"
 	"github.com/jmcintyre/secbase/api/internal/model"
-	"github.com/jmcintyre/secbase/api/internal/repository"
 )
 
 // Author is the resolver for the author field.
 func (r *commentResolver) Author(ctx context.Context, obj *model.Comment) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Author - author"))
+	return r.resolveUser(ctx, obj.AuthorID)
 }
 
 // FileSize is the resolver for the fileSize field.
 func (r *evidenceResolver) FileSize(ctx context.Context, obj *model.Evidence) (int, error) {
-	panic(fmt.Errorf("not implemented: FileSize - fileSize"))
+	return int(obj.FileSize), nil
 }
 
 // UploadedBy is the resolver for the uploadedBy field.
 func (r *evidenceResolver) UploadedBy(ctx context.Context, obj *model.Evidence) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: UploadedBy - uploadedBy"))
+	return r.resolveUser(ctx, obj.UploadedBy)
 }
 
 // AddComment is the resolver for the addComment field.
 func (r *mutationResolver) AddComment(ctx context.Context, input model1.AddCommentInput) (*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: AddComment - addComment"))
-}
-
-// UpdateComment is the resolver for the updateComment field.
-func (r *mutationResolver) UpdateComment(ctx context.Context, id string, body string) (*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: UpdateComment - updateComment"))
-}
-
-// DeleteComment is the resolver for the deleteComment field.
-func (r *mutationResolver) DeleteComment(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteComment - deleteComment"))
-}
-
-// AddEvidence is the resolver for the addEvidence field.
-func (r *mutationResolver) AddEvidence(ctx context.Context, input model1.AddEvidenceInput) (*model.Evidence, error) {
-	panic(fmt.Errorf("not implemented: AddEvidence - addEvidence"))
-}
-
-// DeleteEvidence is the resolver for the deleteEvidence field.
-func (r *mutationResolver) DeleteEvidence(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteEvidence - deleteEvidence"))
-}
-
-// Comment returns CommentResolver implementation.
-func (r *Resolver) Comment() CommentResolver { return &commentResolver{r} }
-
-// Evidence returns EvidenceResolver implementation.
-func (r *Resolver) Evidence() EvidenceResolver { return &evidenceResolver{r} }
-
-type commentResolver struct{ *Resolver }
-type evidenceResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-type CommentConnection struct {
-	Edges      []*CommentEdge `json:"edges"`
-	PageInfo   *PageInfo      `json:"pageInfo"`
-	TotalCount int            `json:"totalCount"`
-}
-type CommentEdge struct {
-	Cursor string         `json:"cursor"`
-	Node   *model.Comment `json:"node"`
-}
-
-func (r *Resolver) EntityComments(ctx context.Context, entityType, entityID string, first *int, after *string) (*CommentConnection, error) {
-	params := paginationParams(first, after)
-	var comments []*model.Comment
-	var pr repository.PaginationResult
-
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		comments, pr, err = r.CommentRepo.ListByEntity(ctx, tx, entityType, entityID, params)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]*CommentEdge, len(comments))
-	for i, c := range comments {
-		edges[i] = &CommentEdge{Cursor: repository.EncodeCursor(i), Node: c}
-	}
-	return &CommentConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
-}
-func (r *Resolver) AddComment(ctx context.Context, entityType, entityID, body string) (*model.Comment, error) {
 	userID, ok := auth.UserIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
@@ -112,10 +42,10 @@ func (r *Resolver) AddComment(ctx context.Context, entityType, entityID, body st
 
 	c := &model.Comment{
 		OrgID:      orgID,
-		EntityType: entityType,
-		EntityID:   entityID,
+		EntityType: input.EntityType,
+		EntityID:   input.EntityID,
 		AuthorID:   userID,
-		Body:       body,
+		Body:       input.Body,
 	}
 
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
@@ -123,7 +53,9 @@ func (r *Resolver) AddComment(ctx context.Context, entityType, entityID, body st
 	})
 	return c, err
 }
-func (r *Resolver) UpdateComment(ctx context.Context, id, body string) (*model.Comment, error) {
+
+// UpdateComment is the resolver for the updateComment field.
+func (r *mutationResolver) UpdateComment(ctx context.Context, id string, body string) (*model.Comment, error) {
 	var c *model.Comment
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
@@ -136,47 +68,17 @@ func (r *Resolver) UpdateComment(ctx context.Context, id, body string) (*model.C
 	})
 	return c, err
 }
-func (r *Resolver) DeleteComment(ctx context.Context, id string) (bool, error) {
+
+// DeleteComment is the resolver for the deleteComment field.
+func (r *mutationResolver) DeleteComment(ctx context.Context, id string) (bool, error) {
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.CommentRepo.Delete(ctx, tx, id)
 	})
 	return err == nil, err
 }
-func (r *Resolver) CommentAuthor(ctx context.Context, c *model.Comment) (*model.User, error) {
-	return r.resolveUser(ctx, c.AuthorID)
-}
 
-type EvidenceConnection struct {
-	Edges      []*EvidenceEdge `json:"edges"`
-	PageInfo   *PageInfo       `json:"pageInfo"`
-	TotalCount int             `json:"totalCount"`
-}
-type EvidenceEdge struct {
-	Cursor string          `json:"cursor"`
-	Node   *model.Evidence `json:"node"`
-}
-
-func (r *Resolver) EntityEvidence(ctx context.Context, entityType, entityID string, first *int, after *string) (*EvidenceConnection, error) {
-	params := paginationParams(first, after)
-	var evidence []*model.Evidence
-	var pr repository.PaginationResult
-
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		evidence, pr, err = r.EvidenceRepo.ListByEntity(ctx, tx, entityType, entityID, params)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]*EvidenceEdge, len(evidence))
-	for i, e := range evidence {
-		edges[i] = &EvidenceEdge{Cursor: repository.EncodeCursor(i), Node: e}
-	}
-	return &EvidenceConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
-}
-func (r *Resolver) AddEvidence(ctx context.Context, entityType, entityID, fileName, filePath, contentType string, fileSize int64) (*model.Evidence, error) {
+// AddEvidence is the resolver for the addEvidence field.
+func (r *mutationResolver) AddEvidence(ctx context.Context, input model1.AddEvidenceInput) (*model.Evidence, error) {
 	userID, ok := auth.UserIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
@@ -188,12 +90,12 @@ func (r *Resolver) AddEvidence(ctx context.Context, entityType, entityID, fileNa
 
 	e := &model.Evidence{
 		OrgID:       orgID,
-		EntityType:  entityType,
-		EntityID:    entityID,
-		FileName:    fileName,
-		FilePath:    filePath,
-		FileSize:    fileSize,
-		ContentType: contentType,
+		EntityType:  input.EntityType,
+		EntityID:    input.EntityID,
+		FileName:    input.FileName,
+		FilePath:    "",
+		FileSize:    int64(input.FileSize),
+		ContentType: input.ContentType,
 		UploadedBy:  userID,
 	}
 
@@ -202,12 +104,20 @@ func (r *Resolver) AddEvidence(ctx context.Context, entityType, entityID, fileNa
 	})
 	return e, err
 }
-func (r *Resolver) DeleteEvidence(ctx context.Context, id string) (bool, error) {
+
+// DeleteEvidence is the resolver for the deleteEvidence field.
+func (r *mutationResolver) DeleteEvidence(ctx context.Context, id string) (bool, error) {
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.EvidenceRepo.Delete(ctx, tx, id)
 	})
 	return err == nil, err
 }
-func (r *Resolver) EvidenceUploadedBy(ctx context.Context, e *model.Evidence) (*model.User, error) {
-	return r.resolveUser(ctx, e.UploadedBy)
-}
+
+// Comment returns CommentResolver implementation.
+func (r *Resolver) Comment() CommentResolver { return &commentResolver{r} }
+
+// Evidence returns EvidenceResolver implementation.
+func (r *Resolver) Evidence() EvidenceResolver { return &evidenceResolver{r} }
+
+type commentResolver struct{ *Resolver }
+type evidenceResolver struct{ *Resolver }

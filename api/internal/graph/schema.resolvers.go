@@ -14,83 +14,14 @@ import (
 	"github.com/jmcintyre/secbase/api/internal/auth"
 	model1 "github.com/jmcintyre/secbase/api/internal/graph/model"
 	"github.com/jmcintyre/secbase/api/internal/model"
-	"github.com/jmcintyre/secbase/api/internal/repository"
 )
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, input model1.LoginInput) (*model1.AuthPayload, error) {
-	panic(fmt.Errorf("not implemented: Login - login"))
-}
-
-// RefreshToken is the resolver for the refreshToken field.
-func (r *mutationResolver) RefreshToken(ctx context.Context, token string) (*model1.AuthPayload, error) {
-	panic(fmt.Errorf("not implemented: RefreshToken - refreshToken"))
-}
-
-// SetupTotp is the resolver for the setupTotp field.
-func (r *mutationResolver) SetupTotp(ctx context.Context) (*model1.TotpSetupPayload, error) {
-	panic(fmt.Errorf("not implemented: SetupTotp - setupTotp"))
-}
-
-// VerifyTotp is the resolver for the verifyTotp field.
-func (r *mutationResolver) VerifyTotp(ctx context.Context, code string) (*model1.TotpVerifyPayload, error) {
-	panic(fmt.Errorf("not implemented: VerifyTotp - verifyTotp"))
-}
-
-// Node is the resolver for the node field.
-func (r *queryResolver) Node(ctx context.Context, id string) (model1.Node, error) {
-	panic(fmt.Errorf("not implemented: Node - node"))
-}
-
-// Health is the resolver for the health field.
-func (r *queryResolver) Health(ctx context.Context) (bool, error) {
-	panic(fmt.Errorf("not implemented: Health - health"))
-}
-
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
-
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *Resolver) Health(ctx context.Context) (bool, error) {
-	return true, nil
-}
-func (r *Resolver) Node(ctx context.Context, id string) (interface{}, error) {
-	// Relay node refetch — decode the ID to determine the type
-	// IDs are plain UUIDs; the resolver tries each entity type
-	// In production, use a base64-encoded "Type:UUID" format
-	return nil, fmt.Errorf("node lookup not yet implemented for id: %s", id)
-}
-
-type AuthPayload struct {
-	AccessToken  string      `json:"accessToken"`
-	RefreshToken string      `json:"refreshToken"`
-	User         *model.User `json:"user"`
-}
-type TotpSetupPayload struct {
-	Secret          string   `json:"secret"`
-	ProvisioningURL string   `json:"provisioningUrl"`
-	BackupCodes     []string `json:"backupCodes"`
-}
-type TotpVerifyPayload struct {
-	Success bool `json:"success"`
-}
-
-func (r *Resolver) Login(ctx context.Context, email, password string, totpCode *string) (*AuthPayload, error) {
-	var result *AuthPayload
+	var result *model1.AuthPayload
 
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		user, err := r.UserRepo.GetByEmail(ctx, tx, email)
+		user, err := r.UserRepo.GetByEmail(ctx, tx, input.Email)
 		if err != nil {
 			return fmt.Errorf("invalid email or password")
 		}
@@ -99,22 +30,21 @@ func (r *Resolver) Login(ctx context.Context, email, password string, totpCode *
 			return fmt.Errorf("account is disabled")
 		}
 
-		match, err := auth.ComparePassword(user.PasswordHash, password)
+		match, err := auth.ComparePassword(user.PasswordHash, input.Password)
 		if err != nil || !match {
 			_ = r.UserRepo.IncrementFailedLogin(ctx, tx, user.ID)
 			return fmt.Errorf("invalid email or password")
 		}
 
 		if user.TOTPEnabled {
-			if totpCode == nil {
+			if input.TotpCode == nil {
 				return fmt.Errorf("totp_required")
 			}
-			if !auth.ValidateTOTP(user.TOTPSecret, *totpCode) {
+			if !auth.ValidateTOTP(user.TOTPSecret, *input.TotpCode) {
 				return fmt.Errorf("invalid TOTP code")
 			}
 		}
 
-		// Get user's roles from groups
 		groups, err := r.UserRepo.GetUserGroups(ctx, tx, user.ID)
 		if err != nil {
 			return fmt.Errorf("get user groups: %w", err)
@@ -149,7 +79,7 @@ func (r *Resolver) Login(ctx context.Context, email, password string, totpCode *
 
 		_ = r.UserRepo.UpdateLastLogin(ctx, tx, user.ID)
 
-		result = &AuthPayload{
+		result = &model1.AuthPayload{
 			AccessToken:  accessToken,
 			RefreshToken: plainRefresh,
 			User:         user,
@@ -162,8 +92,10 @@ func (r *Resolver) Login(ctx context.Context, email, password string, totpCode *
 	}
 	return result, nil
 }
-func (r *Resolver) RefreshToken(ctx context.Context, token string) (*AuthPayload, error) {
-	var result *AuthPayload
+
+// RefreshToken is the resolver for the refreshToken field.
+func (r *mutationResolver) RefreshToken(ctx context.Context, token string) (*model1.AuthPayload, error) {
+	var result *model1.AuthPayload
 
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		hashed := auth.HashRefreshToken(token)
@@ -176,7 +108,6 @@ func (r *Resolver) RefreshToken(ctx context.Context, token string) (*AuthPayload
 			return fmt.Errorf("refresh token expired")
 		}
 
-		// Revoke old token
 		if err := r.UserRepo.RevokeRefreshToken(ctx, tx, rt.ID); err != nil {
 			return err
 		}
@@ -221,7 +152,7 @@ func (r *Resolver) RefreshToken(ctx context.Context, token string) (*AuthPayload
 			return err
 		}
 
-		result = &AuthPayload{
+		result = &model1.AuthPayload{
 			AccessToken:  accessToken,
 			RefreshToken: plainRefresh,
 			User:         user,
@@ -234,13 +165,15 @@ func (r *Resolver) RefreshToken(ctx context.Context, token string) (*AuthPayload
 	}
 	return result, nil
 }
-func (r *Resolver) SetupTotp(ctx context.Context) (*TotpSetupPayload, error) {
+
+// SetupTotp is the resolver for the setupTotp field.
+func (r *mutationResolver) SetupTotp(ctx context.Context) (*model1.TotpSetupPayload, error) {
 	userID, ok := auth.UserIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
-	var result *TotpSetupPayload
+	var result *model1.TotpSetupPayload
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		user, err := r.UserRepo.GetByID(ctx, tx, userID)
 		if err != nil {
@@ -257,12 +190,11 @@ func (r *Resolver) SetupTotp(ctx context.Context) (*TotpSetupPayload, error) {
 			return err
 		}
 
-		// Store the secret (not yet enabled until verified)
 		if err := r.UserRepo.UpdateTOTP(ctx, tx, user.ID, secret, false); err != nil {
 			return err
 		}
 
-		result = &TotpSetupPayload{
+		result = &model1.TotpSetupPayload{
 			Secret:          secret,
 			ProvisioningURL: provisioningURL,
 			BackupCodes:     backupCodes,
@@ -274,7 +206,9 @@ func (r *Resolver) SetupTotp(ctx context.Context) (*TotpSetupPayload, error) {
 	}
 	return result, nil
 }
-func (r *Resolver) VerifyTotp(ctx context.Context, code string) (*TotpVerifyPayload, error) {
+
+// VerifyTotp is the resolver for the verifyTotp field.
+func (r *mutationResolver) VerifyTotp(ctx context.Context, code string) (*model1.TotpVerifyPayload, error) {
 	userID, ok := auth.UserIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
@@ -295,37 +229,24 @@ func (r *Resolver) VerifyTotp(ctx context.Context, code string) (*TotpVerifyPayl
 	if err != nil {
 		return nil, err
 	}
-	return &TotpVerifyPayload{Success: true}, nil
-}
-func paginationParams(first *int, after *string) repository.PaginationParams {
-	p := repository.PaginationParams{}
-	if first != nil {
-		p.First = *first
-	}
-	if after != nil {
-		p.After = *after
-	}
-	return p
-}
-func toPageInfo(pr repository.PaginationResult) *PageInfo {
-	return &PageInfo{
-		HasNextPage:     pr.HasNextPage,
-		HasPreviousPage: pr.HasPreviousPage,
-		StartCursor:     strPtr(pr.StartCursor),
-		EndCursor:       strPtr(pr.EndCursor),
-	}
+	return &model1.TotpVerifyPayload{Success: true}, nil
 }
 
-type PageInfo struct {
-	HasNextPage     bool    `json:"hasNextPage"`
-	HasPreviousPage bool    `json:"hasPreviousPage"`
-	StartCursor     *string `json:"startCursor"`
-	EndCursor       *string `json:"endCursor"`
+// Node is the resolver for the node field.
+func (r *queryResolver) Node(ctx context.Context, id string) (model1.Node, error) {
+	return nil, fmt.Errorf("node lookup not yet implemented for id: %s", id)
 }
 
-func strPtr(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
+// Health is the resolver for the health field.
+func (r *queryResolver) Health(ctx context.Context) (bool, error) {
+	return true, nil
 }
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

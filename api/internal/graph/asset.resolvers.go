@@ -17,110 +17,74 @@ import (
 
 // BusinessOwner is the resolver for the businessOwner field.
 func (r *assetResolver) BusinessOwner(ctx context.Context, obj *model.Asset) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: BusinessOwner - businessOwner"))
+	if obj.BusinessOwnerID == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.BusinessOwnerID)
 }
 
 // TechnicalOwner is the resolver for the technicalOwner field.
 func (r *assetResolver) TechnicalOwner(ctx context.Context, obj *model.Asset) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: TechnicalOwner - technicalOwner"))
+	if obj.TechnicalOwnerID == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.TechnicalOwnerID)
 }
 
 // Vulnerabilities is the resolver for the vulnerabilities field.
 func (r *assetResolver) Vulnerabilities(ctx context.Context, obj *model.Asset, first *int, after *string) (*model1.VulnerabilityConnection, error) {
-	panic(fmt.Errorf("not implemented: Vulnerabilities - vulnerabilities"))
-}
-
-// Comments is the resolver for the comments field.
-func (r *assetResolver) Comments(ctx context.Context, obj *model.Asset, first *int, after *string) (*model1.CommentConnection, error) {
-	panic(fmt.Errorf("not implemented: Comments - comments"))
-}
-
-// Evidence is the resolver for the evidence field.
-func (r *assetResolver) Evidence(ctx context.Context, obj *model.Asset, first *int, after *string) (*model1.EvidenceConnection, error) {
-	panic(fmt.Errorf("not implemented: Evidence - evidence"))
-}
-
-// Dependencies is the resolver for the dependencies field.
-func (r *assetResolver) Dependencies(ctx context.Context, obj *model.Asset) ([]*model.Asset, error) {
-	panic(fmt.Errorf("not implemented: Dependencies - dependencies"))
-}
-
-// CreateAsset is the resolver for the createAsset field.
-func (r *mutationResolver) CreateAsset(ctx context.Context, input model1.CreateAssetInput) (*model.Asset, error) {
-	panic(fmt.Errorf("not implemented: CreateAsset - createAsset"))
-}
-
-// UpdateAsset is the resolver for the updateAsset field.
-func (r *mutationResolver) UpdateAsset(ctx context.Context, id string, input model1.UpdateAssetInput) (*model.Asset, error) {
-	panic(fmt.Errorf("not implemented: UpdateAsset - updateAsset"))
-}
-
-// DeleteAsset is the resolver for the deleteAsset field.
-func (r *mutationResolver) DeleteAsset(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteAsset - deleteAsset"))
-}
-
-// Assets is the resolver for the assets field.
-func (r *queryResolver) Assets(ctx context.Context, first *int, after *string, filter *model1.AssetFilter) (*model1.AssetConnection, error) {
-	panic(fmt.Errorf("not implemented: Assets - assets"))
-}
-
-// Asset is the resolver for the asset field.
-func (r *queryResolver) Asset(ctx context.Context, id string) (*model.Asset, error) {
-	panic(fmt.Errorf("not implemented: Asset - asset"))
-}
-
-// Asset returns AssetResolver implementation.
-func (r *Resolver) Asset() AssetResolver { return &assetResolver{r} }
-
-type assetResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-type AssetConnection struct {
-	Edges      []*AssetEdge `json:"edges"`
-	PageInfo   *PageInfo    `json:"pageInfo"`
-	TotalCount int          `json:"totalCount"`
-}
-type AssetEdge struct {
-	Cursor string       `json:"cursor"`
-	Node   *model.Asset `json:"node"`
-}
-
-func (r *Resolver) Assets(ctx context.Context, first *int, after *string, filter *repository.AssetFilter) (*AssetConnection, error) {
 	params := paginationParams(first, after)
 
-	var assets []*model.Asset
+	var vulns []*model.Vulnerability
 	var pr repository.PaginationResult
 
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		assets, pr, err = r.AssetRepo.List(ctx, tx, params, filter)
+		vulns, pr, err = r.VulnRepo.ListByAsset(ctx, tx, obj.ID, params)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	edges := make([]*AssetEdge, len(assets))
-	for i, a := range assets {
-		edges[i] = &AssetEdge{
+	edges := make([]*model1.VulnerabilityEdge, len(vulns))
+	for i, v := range vulns {
+		edges[i] = &model1.VulnerabilityEdge{
 			Cursor: repository.EncodeCursor(i),
-			Node:   a,
+			Node:   v,
 		}
 	}
 
-	return &AssetConnection{
+	return &model1.VulnerabilityConnection{
 		Edges:      edges,
 		PageInfo:   toPageInfo(pr),
 		TotalCount: pr.TotalCount,
 	}, nil
 }
-func (r *Resolver) CreateAsset(ctx context.Context, input CreateAssetInput) (*model.Asset, error) {
+
+// Comments is the resolver for the comments field.
+func (r *assetResolver) Comments(ctx context.Context, obj *model.Asset, first *int, after *string) (*model1.CommentConnection, error) {
+	return r.entityComments(ctx, "asset", obj.ID, first, after)
+}
+
+// Evidence is the resolver for the evidence field.
+func (r *assetResolver) Evidence(ctx context.Context, obj *model.Asset, first *int, after *string) (*model1.EvidenceConnection, error) {
+	return r.entityEvidence(ctx, "asset", obj.ID, first, after)
+}
+
+// Dependencies is the resolver for the dependencies field.
+func (r *assetResolver) Dependencies(ctx context.Context, obj *model.Asset) ([]*model.Asset, error) {
+	var deps []*model.Asset
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		deps, err = r.AssetRepo.GetDependencies(ctx, tx, obj.ID)
+		return err
+	})
+	return deps, err
+}
+
+// CreateAsset is the resolver for the createAsset field.
+func (r *mutationResolver) CreateAsset(ctx context.Context, input model1.CreateAssetInput) (*model.Asset, error) {
 	orgID, ok := auth.OrgIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
@@ -150,8 +114,8 @@ func (r *Resolver) CreateAsset(ctx context.Context, input CreateAssetInput) (*mo
 	if input.Hostnames != nil {
 		a.Hostnames = input.Hostnames
 	}
-	if input.FQDN != nil {
-		a.FQDN = *input.FQDN
+	if input.Fqdn != nil {
+		a.FQDN = *input.Fqdn
 	}
 	if input.URL != nil {
 		a.URL = *input.URL
@@ -180,7 +144,9 @@ func (r *Resolver) CreateAsset(ctx context.Context, input CreateAssetInput) (*mo
 	})
 	return a, err
 }
-func (r *Resolver) UpdateAsset(ctx context.Context, id string, input UpdateAssetInput) (*model.Asset, error) {
+
+// UpdateAsset is the resolver for the updateAsset field.
+func (r *mutationResolver) UpdateAsset(ctx context.Context, id string, input model1.UpdateAssetInput) (*model.Asset, error) {
 	var a *model.Asset
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
@@ -215,8 +181,8 @@ func (r *Resolver) UpdateAsset(ctx context.Context, id string, input UpdateAsset
 		if input.Hostnames != nil {
 			a.Hostnames = input.Hostnames
 		}
-		if input.FQDN != nil {
-			a.FQDN = *input.FQDN
+		if input.Fqdn != nil {
+			a.FQDN = *input.Fqdn
 		}
 		if input.URL != nil {
 			a.URL = *input.URL
@@ -246,82 +212,71 @@ func (r *Resolver) UpdateAsset(ctx context.Context, id string, input UpdateAsset
 	})
 	return a, err
 }
-func (r *Resolver) DeleteAsset(ctx context.Context, id string) (bool, error) {
+
+// DeleteAsset is the resolver for the deleteAsset field.
+func (r *mutationResolver) DeleteAsset(ctx context.Context, id string) (bool, error) {
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.AssetRepo.Delete(ctx, tx, id)
 	})
 	return err == nil, err
 }
-func (r *Resolver) AssetBusinessOwner(ctx context.Context, asset *model.Asset) (*model.User, error) {
-	if asset.BusinessOwnerID == nil {
-		return nil, nil
+
+// Assets is the resolver for the assets field.
+func (r *queryResolver) Assets(ctx context.Context, first *int, after *string, filter *model1.AssetFilter) (*model1.AssetConnection, error) {
+	params := paginationParams(first, after)
+
+	var repoFilter *repository.AssetFilter
+	if filter != nil {
+		repoFilter = &repository.AssetFilter{
+			AssetType:   filter.AssetType,
+			Environment: filter.Environment,
+			Criticality: filter.Criticality,
+			Status:      filter.Status,
+			OwnerID:     filter.OwnerID,
+			Search:      filter.Search,
+			Tags:        filter.Tags,
+		}
 	}
-	var user *model.User
+
+	var assets []*model.Asset
+	var pr repository.PaginationResult
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		user, err = r.UserRepo.GetByID(ctx, tx, *asset.BusinessOwnerID)
+		assets, pr, err = r.AssetRepo.List(ctx, tx, params, repoFilter)
 		return err
 	})
-	return user, err
-}
-func (r *Resolver) AssetTechnicalOwner(ctx context.Context, asset *model.Asset) (*model.User, error) {
-	if asset.TechnicalOwnerID == nil {
-		return nil, nil
+	if err != nil {
+		return nil, err
 	}
-	var user *model.User
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		user, err = r.UserRepo.GetByID(ctx, tx, *asset.TechnicalOwnerID)
-		return err
-	})
-	return user, err
-}
-func (r *Resolver) AssetDependencies(ctx context.Context, asset *model.Asset) ([]*model.Asset, error) {
-	var deps []*model.Asset
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		deps, err = r.AssetRepo.GetDependencies(ctx, tx, asset.ID)
-		return err
-	})
-	return deps, err
+
+	edges := make([]*model1.AssetEdge, len(assets))
+	for i, a := range assets {
+		edges[i] = &model1.AssetEdge{
+			Cursor: repository.EncodeCursor(i),
+			Node:   a,
+		}
+	}
+
+	return &model1.AssetConnection{
+		Edges:      edges,
+		PageInfo:   toPageInfo(pr),
+		TotalCount: pr.TotalCount,
+	}, nil
 }
 
-type CreateAssetInput struct {
-	Name               string   `json:"name"`
-	AssetType          string   `json:"assetType"`
-	Make               *string  `json:"make"`
-	Model              *string  `json:"model"`
-	Version            *string  `json:"version"`
-	BusinessOwnerID    *string  `json:"businessOwnerId"`
-	TechnicalOwnerID   *string  `json:"technicalOwnerId"`
-	IPAddresses        []string `json:"ipAddresses"`
-	Hostnames          []string `json:"hostnames"`
-	FQDN               *string  `json:"fqdn"`
-	URL                *string  `json:"url"`
-	LocationSite       *string  `json:"locationSite"`
-	LocationDetail     *string  `json:"locationDetail"`
-	Environment        *string  `json:"environment"`
-	Criticality        *int     `json:"criticality"`
-	DataClassification *string  `json:"dataClassification"`
-	Tags               []string `json:"tags"`
+// Asset is the resolver for the asset field.
+func (r *queryResolver) Asset(ctx context.Context, id string) (*model.Asset, error) {
+	var a *model.Asset
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		a, err = r.AssetRepo.GetByID(ctx, tx, id)
+		return err
+	})
+	return a, err
 }
-type UpdateAssetInput struct {
-	Name               *string  `json:"name"`
-	AssetType          *string  `json:"assetType"`
-	Make               *string  `json:"make"`
-	Model              *string  `json:"model"`
-	Version            *string  `json:"version"`
-	BusinessOwnerID    *string  `json:"businessOwnerId"`
-	TechnicalOwnerID   *string  `json:"technicalOwnerId"`
-	IPAddresses        []string `json:"ipAddresses"`
-	Hostnames          []string `json:"hostnames"`
-	FQDN               *string  `json:"fqdn"`
-	URL                *string  `json:"url"`
-	LocationSite       *string  `json:"locationSite"`
-	LocationDetail     *string  `json:"locationDetail"`
-	Environment        *string  `json:"environment"`
-	Criticality        *int     `json:"criticality"`
-	DataClassification *string  `json:"dataClassification"`
-	Tags               []string `json:"tags"`
-	Status             *string  `json:"status"`
-}
+
+// Asset returns AssetResolver implementation.
+func (r *Resolver) Asset() AssetResolver { return &assetResolver{r} }
+
+type assetResolver struct{ *Resolver }
