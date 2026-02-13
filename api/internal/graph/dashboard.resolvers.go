@@ -17,30 +17,82 @@ import (
 // VulnOverview is the resolver for the vulnOverview field.
 func (r *queryResolver) VulnOverview(ctx context.Context) (*model1.VulnOverview, error) {
 	var o *repository.VulnOverview
+	var mttr *float64
+	var topAssets []repository.TopVulnAsset
+	var topCves []repository.TopCve
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		o, err = r.DashboardRepo.GetVulnOverview(ctx, tx)
-		return err
+		if err != nil {
+			return err
+		}
+		mttr, _ = r.DashboardRepo.GetMTTR(ctx, tx)
+		topAssets, _ = r.DashboardRepo.GetTopVulnAssets(ctx, tx, 5)
+		topCves, _ = r.DashboardRepo.GetTopCves(ctx, tx, 5)
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &model1.VulnOverview{
+
+	result := &model1.VulnOverview{
 		TotalOpen:     o.TotalOpen,
 		CriticalCount: o.CriticalCount,
 		HighCount:     o.HighCount,
 		MediumCount:   o.MediumCount,
 		LowCount:      o.LowCount,
-	}, nil
+		MttrDays:      mttr,
+		TopAssets:      []*model1.AssetVulnCount{},
+		TopCves:        []*model1.CveCount{},
+	}
+
+	// Resolve top assets
+	if len(topAssets) > 0 {
+		err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+			for _, ta := range topAssets {
+				a, err := r.AssetRepo.GetByID(ctx, tx, ta.AssetID)
+				if err != nil {
+					continue
+				}
+				result.TopAssets = append(result.TopAssets, &model1.AssetVulnCount{
+					Asset: a,
+					Count: ta.Count,
+				})
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Resolve top CVEs
+	for _, tc := range topCves {
+		sev := tc.Severity
+		result.TopCves = append(result.TopCves, &model1.CveCount{
+			CveID:    tc.CveID,
+			Count:    tc.Count,
+			Severity: &sev,
+		})
+	}
+
+	return result, nil
 }
 
 // RiskPosture is the resolver for the riskPosture field.
 func (r *queryResolver) RiskPosture(ctx context.Context) (*model1.RiskPosture, error) {
 	var cells []repository.HeatmapCell
+	var levels []repository.RiskLevelCount
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		cells, err = r.RiskRepo.GetHeatmapData(ctx, tx)
-		return err
+		if err != nil {
+			return err
+		}
+		levels, _ = r.DashboardRepo.GetRiskCountsByLevel(ctx, tx)
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -54,8 +106,17 @@ func (r *queryResolver) RiskPosture(ctx context.Context) (*model1.RiskPosture, e
 			Count:      c.Count,
 		}
 	}
+
+	countsByLevel := make([]*model1.LevelCount, len(levels))
+	for i, lc := range levels {
+		countsByLevel[i] = &model1.LevelCount{
+			Level: lc.Level,
+			Count: lc.Count,
+		}
+	}
+
 	return &model1.RiskPosture{
-		CountsByLevel: []*model1.LevelCount{},
+		CountsByLevel: countsByLevel,
 		HeatmapData:   heatmap,
 	}, nil
 }
@@ -63,64 +124,113 @@ func (r *queryResolver) RiskPosture(ctx context.Context) (*model1.RiskPosture, e
 // IncidentStatus is the resolver for the incidentStatus field.
 func (r *queryResolver) IncidentStatus(ctx context.Context) (*model1.IncidentStatusSummary, error) {
 	var s *repository.IncidentSummary
+	var impacts []repository.ImpactCount
+	var timeline []repository.RecentIncidentEntry
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		s, err = r.DashboardRepo.GetIncidentSummary(ctx, tx)
-		return err
+		if err != nil {
+			return err
+		}
+		impacts, _ = r.DashboardRepo.GetIncidentsByImpact(ctx, tx)
+		timeline, _ = r.DashboardRepo.GetRecentIncidentTimeline(ctx, tx, 10)
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
+
+	openByImpact := make([]*model1.ImpactCount, len(impacts))
+	for i, ic := range impacts {
+		openByImpact[i] = &model1.ImpactCount{
+			Impact: ic.Impact,
+			Count:  ic.Count,
+		}
+	}
+
+	recentTimeline := make([]*model1.IncidentTimelineEntry, len(timeline))
+	for i, te := range timeline {
+		recentTimeline[i] = &model1.IncidentTimelineEntry{
+			Incident: te.Incident,
+			Date:     te.Date,
+		}
+	}
+
 	return &model1.IncidentStatusSummary{
-		OpenByImpact:   []*model1.ImpactCount{},
+		OpenByImpact:   openByImpact,
 		SLABreaches:    s.SLABreaches,
-		RecentTimeline: []*model1.IncidentTimelineEntry{},
+		RecentTimeline: recentTimeline,
 	}, nil
 }
 
 // ComplianceSnapshot is the resolver for the complianceSnapshot field.
 func (r *queryResolver) ComplianceSnapshot(ctx context.Context) (*model1.ComplianceSnapshot, error) {
 	var s *repository.ComplianceSummary
+	var gaps []repository.ControlGap
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		s, err = r.IsoControlRepo.GetComplianceSummary(ctx, tx)
-		return err
+		if err != nil {
+			return err
+		}
+		gaps, _ = r.DashboardRepo.GetTopComplianceGaps(ctx, tx, 5)
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	total := float64(s.Implemented + s.PartiallyImplemented + s.NotImplemented + s.NotApplicable)
 	if total == 0 {
 		return &model1.ComplianceSnapshot{TopGaps: []*model1.ControlGap{}}, nil
 	}
+
+	topGaps := make([]*model1.ControlGap, len(gaps))
+	for i, g := range gaps {
+		topGaps[i] = &model1.ControlGap{
+			Control: g.Control,
+			Status:  g.Status,
+		}
+	}
+
 	return &model1.ComplianceSnapshot{
 		ImplementedPct:          float64(s.Implemented) / total * 100,
 		PartiallyImplementedPct: float64(s.PartiallyImplemented) / total * 100,
 		NotImplementedPct:       float64(s.NotImplemented) / total * 100,
 		NotApplicablePct:        float64(s.NotApplicable) / total * 100,
-		TopGaps:                 []*model1.ControlGap{},
+		TopGaps:                 topGaps,
 	}, nil
 }
 
 // DrReadiness is the resolver for the drReadiness field.
 func (r *queryResolver) DrReadiness(ctx context.Context) (*model1.DrReadiness, error) {
 	var d *repository.DrReadiness
+	var playbookVersion *string
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		d, err = r.DashboardRepo.GetDrReadiness(ctx, tx)
-		return err
+		if err != nil {
+			return err
+		}
+		playbookVersion, _ = r.DashboardRepo.GetLatestPlanVersion(ctx, tx)
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	var lastResult *string
 	if d.LastTestResult != "" {
 		lastResult = &d.LastTestResult
 	}
 	return &model1.DrReadiness{
-		NextTestDate:   d.NextTestDate,
-		LastTestDate:   d.LastTestDate,
-		LastTestResult: lastResult,
+		NextTestDate:    d.NextTestDate,
+		LastTestDate:    d.LastTestDate,
+		LastTestResult:  lastResult,
+		PlaybookVersion: playbookVersion,
 	}, nil
 }
 
@@ -128,23 +238,50 @@ func (r *queryResolver) DrReadiness(ctx context.Context) (*model1.DrReadiness, e
 func (r *queryResolver) MyTasks(ctx context.Context) (*model1.MyTasks, error) {
 	userID, ok := auth.UserIDFromContext(ctx)
 	if !ok {
-		return &model1.MyTasks{}, nil
+		return &model1.MyTasks{
+			RecentVulns:     []*model.Vulnerability{},
+			RecentRisks:     []*model.Risk{},
+			RecentIncidents: []*model.Incident{},
+		}, nil
 	}
+
 	var t *repository.MyTasks
+	var recent *repository.MyRecentItems
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		t, err = r.DashboardRepo.GetMyTasks(ctx, tx, userID)
-		return err
+		if err != nil {
+			return err
+		}
+		recent, _ = r.DashboardRepo.GetMyRecentItems(ctx, tx, userID)
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &model1.MyTasks{
+
+	result := &model1.MyTasks{
 		AssignedVulnCount:     t.Vulnerabilities,
 		AssignedRiskCount:     t.Risks,
 		AssignedIncidentCount: t.Incidents,
 		AssignedActionCount:   t.Actions,
-	}, nil
+		RecentVulns:           []*model.Vulnerability{},
+		RecentRisks:           []*model.Risk{},
+		RecentIncidents:       []*model.Incident{},
+	}
+	if recent != nil {
+		if recent.Vulns != nil {
+			result.RecentVulns = recent.Vulns
+		}
+		if recent.Risks != nil {
+			result.RecentRisks = recent.Risks
+		}
+		if recent.Incidents != nil {
+			result.RecentIncidents = recent.Incidents
+		}
+	}
+	return result, nil
 }
 
 // CveFeed is the resolver for the cveFeed field.

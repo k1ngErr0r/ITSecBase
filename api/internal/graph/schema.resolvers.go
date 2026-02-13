@@ -234,7 +234,39 @@ func (r *mutationResolver) VerifyTotp(ctx context.Context, code string) (*model1
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id string) (model1.Node, error) {
-	return nil, fmt.Errorf("node lookup not yet implemented for id: %s", id)
+	var result model1.Node
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		// Try each entity type in turn until one matches the ID
+		if u, err := r.UserRepo.GetByID(ctx, tx, id); err == nil {
+			result = u
+			return nil
+		}
+		if a, err := r.AssetRepo.GetByID(ctx, tx, id); err == nil {
+			result = a
+			return nil
+		}
+		if v, err := r.VulnRepo.GetByID(ctx, tx, id); err == nil {
+			result = v
+			return nil
+		}
+		if ri, err := r.RiskRepo.GetByID(ctx, tx, id); err == nil {
+			result = ri
+			return nil
+		}
+		if inc, err := r.IncidentRepo.GetByID(ctx, tx, id); err == nil {
+			result = inc
+			return nil
+		}
+		if dp, err := r.DrPlanRepo.GetByID(ctx, tx, id); err == nil {
+			result = dp
+			return nil
+		}
+		return fmt.Errorf("node not found for id: %s", id)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // Health is the resolver for the health field.
