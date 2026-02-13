@@ -1,0 +1,132 @@
+"""
+Risk management types and operations.
+"""
+
+type Risk implements Node {
+  id: ID!
+  title: String!
+  description: String!
+  scenario: String!
+  category: String!
+  source: String!
+  inherentLikelihood: Int
+  inherentImpact: Int
+  residualLikelihood: Int
+  residualImpact: Int
+  calculatedInherentLevel: String
+  calculatedResidualLevel: String
+  status: String!
+  owner: User
+  approver: User
+  reviewDate: Time
+  lastReviewedBy: User
+  createdAt: Time!
+  updatedAt: Time!
+  assets(first: Int, after: String): AssetConnection!
+  treatments: [RiskTreatment!]!
+  controls: [OrgIsoControl!]!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+}
+
+type RiskConnection {
+  edges: [RiskEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type RiskEdge {
+  cursor: String!
+  node: Risk!
+}
+
+type RiskTreatment implements Node {
+  id: ID!
+  action: String!
+  responsible: User
+  deadline: Time
+  status: String!
+  createdAt: Time!
+}
+
+type RiskMatrixConfig {
+  id: ID!
+  likelihoodLabels: [String!]!
+  impactLabels: [String!]!
+  levelThresholds: String!
+}
+
+extend type Query {
+  risks(first: Int, after: String, filter: RiskFilter): RiskConnection!
+  risk(id: ID!): Risk
+  riskMatrixConfig: RiskMatrixConfig
+}
+
+extend type Mutation {
+  createRisk(input: CreateRiskInput!): Risk!
+  updateRisk(id: ID!, input: UpdateRiskInput!): Risk!
+  deleteRisk(id: ID!): Boolean!
+  addRiskTreatment(riskId: ID!, input: AddRiskTreatmentInput!): RiskTreatment!
+  updateRiskTreatment(id: ID!, input: UpdateRiskTreatmentInput!): RiskTreatment!
+  updateRiskMatrixConfig(input: UpdateRiskMatrixConfigInput!): RiskMatrixConfig!
+}
+
+input RiskFilter {
+  category: String
+  status: String
+  ownerId: ID
+  minInherentLevel: Int
+  search: String
+}
+
+input CreateRiskInput {
+  title: String!
+  description: String
+  scenario: String
+  category: String
+  source: String
+  inherentLikelihood: Int
+  inherentImpact: Int
+  residualLikelihood: Int
+  residualImpact: Int
+  ownerId: ID
+  approverId: ID
+  reviewDate: Time
+  assetIds: [ID!]
+  controlIds: [ID!]
+}
+
+input UpdateRiskInput {
+  title: String
+  description: String
+  scenario: String
+  category: String
+  source: String
+  inherentLikelihood: Int
+  inherentImpact: Int
+  residualLikelihood: Int
+  residualImpact: Int
+  status: String
+  ownerId: ID
+  approverId: ID
+  reviewDate: Time
+}
+
+input AddRiskTreatmentInput {
+  action: String!
+  responsibleId: ID
+  deadline: Time
+}
+
+input UpdateRiskTreatmentInput {
+  action: String
+  responsibleId: ID
+  deadline: Time
+  status: String
+}
+
+input UpdateRiskMatrixConfigInput {
+  likelihoodLabels: [String!]!
+  impactLabels: [String!]!
+  levelThresholds: String!
+}

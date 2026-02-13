@@ -1,0 +1,124 @@
+"""
+User and Group types for identity management.
+"""
+
+type User implements Node {
+  id: ID!
+  email: String!
+  displayName: String!
+  jobTitle: String!
+  department: String!
+  profilePictureUrl: String!
+  status: String!
+  totpEnabled: Boolean!
+  lastLoginAt: Time
+  createdAt: Time!
+  updatedAt: Time!
+  groups(first: Int, after: String): GroupConnection!
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type UserEdge {
+  cursor: String!
+  node: User!
+}
+
+type Group implements Node {
+  id: ID!
+  name: String!
+  description: String!
+  permissions: [String!]!
+  createdAt: Time!
+  members(first: Int, after: String): UserConnection!
+}
+
+type GroupConnection {
+  edges: [GroupEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type GroupEdge {
+  cursor: String!
+  node: Group!
+}
+
+extend type Query {
+  """
+  Get the currently authenticated user.
+  """
+  me: User
+
+  """
+  List users in the organisation.
+  """
+  users(first: Int, after: String, filter: UserFilter): UserConnection!
+
+  """
+  List groups in the organisation.
+  """
+  groups(first: Int, after: String): GroupConnection!
+}
+
+extend type Mutation {
+  createUser(input: CreateUserInput!): User!
+  updateUser(id: ID!, input: UpdateUserInput!): User!
+  disableUser(id: ID!): User!
+  enableUser(id: ID!): User!
+
+  createGroup(input: CreateGroupInput!): Group!
+  updateGroup(id: ID!, input: UpdateGroupInput!): Group!
+  deleteGroup(id: ID!): Boolean!
+
+  addUserToGroup(userId: ID!, groupId: ID!): Boolean!
+  removeUserFromGroup(userId: ID!, groupId: ID!): Boolean!
+
+  changePassword(currentPassword: String!, newPassword: String!): Boolean!
+  updateProfile(input: UpdateProfileInput!): User!
+}
+
+input UserFilter {
+  status: String
+  search: String
+  groupId: ID
+}
+
+input CreateUserInput {
+  email: String!
+  password: String!
+  displayName: String!
+  jobTitle: String
+  department: String
+  groupIds: [ID!]
+}
+
+input UpdateUserInput {
+  displayName: String
+  jobTitle: String
+  department: String
+  status: String
+}
+
+input CreateGroupInput {
+  name: String!
+  description: String
+  permissions: [String!]!
+}
+
+input UpdateGroupInput {
+  name: String
+  description: String
+  permissions: [String!]
+}
+
+input UpdateProfileInput {
+  displayName: String
+  jobTitle: String
+  department: String
+  profilePictureUrl: String
+}

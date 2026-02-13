@@ -1,0 +1,32 @@
+schema:
+  - internal/graph/schema/*.graphqls
+
+exec:
+  filename: internal/graph/generated.go
+  package: graph
+
+model:
+  filename: internal/graph/model/models_gen.go
+  package: model
+
+resolver:
+  layout: follow-schema
+  dir: internal/graph
+  package: graph
+
+autobind:
+  - github.com/jmcintyre/secbase/api/internal/model
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+  Node:
+    model:
+      - github.com/jmcintyre/secbase/api/internal/graph/model.Node
+  Time:
+    model:
+      - github.com/99designs/gqlgen/graphql.Time

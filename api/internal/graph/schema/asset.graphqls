@@ -1,0 +1,105 @@
+"""
+Asset management types and operations.
+"""
+
+type Asset implements Node {
+  id: ID!
+  name: String!
+  assetType: String!
+  make: String!
+  model: String!
+  version: String!
+  businessOwner: User
+  technicalOwner: User
+  ipAddresses: [String!]!
+  hostnames: [String!]!
+  fqdn: String!
+  url: String!
+  locationSite: String!
+  locationDetail: String!
+  environment: String
+  criticality: Int
+  dataClassification: String
+  tags: [String!]!
+  status: String!
+  decommissionDate: Time
+  createdAt: Time!
+  updatedAt: Time!
+  vulnerabilities(first: Int, after: String): VulnerabilityConnection!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+  dependencies: [Asset!]!
+}
+
+type AssetConnection {
+  edges: [AssetEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AssetEdge {
+  cursor: String!
+  node: Asset!
+}
+
+extend type Query {
+  assets(first: Int, after: String, filter: AssetFilter): AssetConnection!
+  asset(id: ID!): Asset
+}
+
+extend type Mutation {
+  createAsset(input: CreateAssetInput!): Asset!
+  updateAsset(id: ID!, input: UpdateAssetInput!): Asset!
+  deleteAsset(id: ID!): Boolean!
+}
+
+input AssetFilter {
+  assetType: String
+  environment: String
+  criticality: Int
+  status: String
+  ownerId: ID
+  search: String
+  tags: [String!]
+}
+
+input CreateAssetInput {
+  name: String!
+  assetType: String!
+  make: String
+  model: String
+  version: String
+  businessOwnerId: ID
+  technicalOwnerId: ID
+  ipAddresses: [String!]
+  hostnames: [String!]
+  fqdn: String
+  url: String
+  locationSite: String
+  locationDetail: String
+  environment: String
+  criticality: Int
+  dataClassification: String
+  tags: [String!]
+}
+
+input UpdateAssetInput {
+  name: String
+  assetType: String
+  make: String
+  model: String
+  version: String
+  businessOwnerId: ID
+  technicalOwnerId: ID
+  ipAddresses: [String!]
+  hostnames: [String!]
+  fqdn: String
+  url: String
+  locationSite: String
+  locationDetail: String
+  environment: String
+  criticality: Int
+  dataClassification: String
+  tags: [String!]
+  status: String
+}

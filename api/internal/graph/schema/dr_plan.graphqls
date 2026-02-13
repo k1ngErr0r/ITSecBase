@@ -1,0 +1,99 @@
+"""
+Disaster Recovery plan types and operations.
+"""
+
+type DrPlan implements Node {
+  id: ID!
+  name: String!
+  scope: String!
+  owner: User
+  version: String!
+  rtoMinutes: Int
+  rpoMinutes: Int
+  playbook: String!
+  status: String!
+  createdAt: Time!
+  updatedAt: Time!
+  assets(first: Int, after: String): AssetConnection!
+  tests: [DrTest!]!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+}
+
+type DrPlanConnection {
+  edges: [DrPlanEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type DrPlanEdge {
+  cursor: String!
+  node: DrPlan!
+}
+
+type DrTest implements Node {
+  id: ID!
+  testType: String
+  plannedDate: Time
+  actualDate: Time
+  result: String
+  observations: String!
+  createdAt: Time!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+}
+
+extend type Query {
+  drPlans(first: Int, after: String, filter: DrPlanFilter): DrPlanConnection!
+  drPlan(id: ID!): DrPlan
+}
+
+extend type Mutation {
+  createDrPlan(input: CreateDrPlanInput!): DrPlan!
+  updateDrPlan(id: ID!, input: UpdateDrPlanInput!): DrPlan!
+  deleteDrPlan(id: ID!): Boolean!
+  recordDrTest(planId: ID!, input: RecordDrTestInput!): DrTest!
+  updateDrTest(id: ID!, input: UpdateDrTestInput!): DrTest!
+}
+
+input DrPlanFilter {
+  status: String
+  ownerId: ID
+  search: String
+}
+
+input CreateDrPlanInput {
+  name: String!
+  scope: String
+  ownerId: ID
+  version: String
+  rtoMinutes: Int
+  rpoMinutes: Int
+  playbook: String
+  assetIds: [ID!]
+}
+
+input UpdateDrPlanInput {
+  name: String
+  scope: String
+  ownerId: ID
+  version: String
+  rtoMinutes: Int
+  rpoMinutes: Int
+  playbook: String
+  status: String
+}
+
+input RecordDrTestInput {
+  testType: String!
+  plannedDate: Time
+  actualDate: Time
+  result: String
+  observations: String
+}
+
+input UpdateDrTestInput {
+  actualDate: Time
+  result: String
+  observations: String
+}

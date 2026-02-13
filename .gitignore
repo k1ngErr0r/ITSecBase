@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+api/bin/
+api/tmp/
+web/dist/
+web/build/
+
+# Generated files
+api/internal/graph/generated.go
+web/src/__generated__/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+docker/data/
+
+# Test
+coverage/
+*.cover
+*.out
+
+# Logs
+*.log
+
+# Temp
+tmp/
+tmpclaude-*

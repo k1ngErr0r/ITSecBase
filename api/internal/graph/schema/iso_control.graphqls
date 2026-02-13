@@ -1,0 +1,78 @@
+"""
+ISO 27001:2022 control types and operations.
+"""
+
+type IsoControl implements Node {
+  id: ID!
+  controlId: String!
+  name: String!
+  theme: String!
+  description: String!
+}
+
+type OrgIsoControl implements Node {
+  id: ID!
+  control: IsoControl!
+  applicability: String!
+  nonApplicabilityJustification: String!
+  implementationStatus: String!
+  implementationDescription: String!
+  responsibleOwner: User
+  createdAt: Time!
+  updatedAt: Time!
+  assets(first: Int, after: String): AssetConnection!
+  risks(first: Int, after: String): RiskConnection!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+}
+
+type OrgIsoControlConnection {
+  edges: [OrgIsoControlEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type OrgIsoControlEdge {
+  cursor: String!
+  node: OrgIsoControl!
+}
+
+extend type Query {
+  """
+  List all ISO 27001:2022 reference controls, optionally filtered by theme.
+  """
+  isoControls(theme: String): [IsoControl!]!
+
+  """
+  List organisation-specific control statuses (SOA view).
+  """
+  orgIsoControls(first: Int, after: String, filter: OrgIsoControlFilter): OrgIsoControlConnection!
+
+  """
+  Get a single organisation control status.
+  """
+  orgIsoControl(id: ID!): OrgIsoControl
+}
+
+extend type Mutation {
+  """
+  Update an organisation's implementation status for a control.
+  """
+  updateOrgIsoControl(id: ID!, input: UpdateOrgIsoControlInput!): OrgIsoControl!
+}
+
+input OrgIsoControlFilter {
+  theme: String
+  implementationStatus: String
+  applicability: String
+  ownerId: ID
+  search: String
+}
+
+input UpdateOrgIsoControlInput {
+  applicability: String
+  nonApplicabilityJustification: String
+  implementationStatus: String
+  implementationDescription: String
+  responsibleOwnerId: ID
+}

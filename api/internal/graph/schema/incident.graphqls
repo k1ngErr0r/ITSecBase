@@ -1,0 +1,126 @@
+"""
+Incident management types and operations.
+"""
+
+type Incident implements Node {
+  id: ID!
+  name: String!
+  area: String!
+  description: String!
+  impactSummary: String!
+  impactRating: String
+  classification: [String!]!
+  regulatoryBreach: Boolean!
+  reporter: User
+  owner: User
+  status: String!
+  rootCause: String!
+  rootCauseCategory: String!
+  correctiveActions: String!
+  preventiveActions: String!
+  detectedAt: Time
+  openedAt: Time!
+  containedAt: Time
+  resolvedAt: Time
+  closedAt: Time
+  slaDeadline: Time
+  createdAt: Time!
+  updatedAt: Time!
+  assets(first: Int, after: String): AssetConnection!
+  vulnerabilities(first: Int, after: String): VulnerabilityConnection!
+  actions: [IncidentAction!]!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+}
+
+type IncidentConnection {
+  edges: [IncidentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IncidentEdge {
+  cursor: String!
+  node: Incident!
+}
+
+type IncidentAction implements Node {
+  id: ID!
+  actionType: String
+  description: String!
+  owner: User
+  dueDate: Time
+  status: String!
+  createdAt: Time!
+}
+
+extend type Query {
+  incidents(first: Int, after: String, filter: IncidentFilter): IncidentConnection!
+  incident(id: ID!): Incident
+}
+
+extend type Mutation {
+  createIncident(input: CreateIncidentInput!): Incident!
+  updateIncident(id: ID!, input: UpdateIncidentInput!): Incident!
+  deleteIncident(id: ID!): Boolean!
+  addIncidentAction(incidentId: ID!, input: AddIncidentActionInput!): IncidentAction!
+  updateIncidentAction(id: ID!, input: UpdateIncidentActionInput!): IncidentAction!
+}
+
+input IncidentFilter {
+  impactRating: String
+  status: String
+  ownerId: ID
+  search: String
+  openedAfter: Time
+  openedBefore: Time
+}
+
+input CreateIncidentInput {
+  name: String!
+  area: String
+  description: String
+  impactSummary: String
+  impactRating: String
+  classification: [String!]
+  regulatoryBreach: Boolean
+  reporterId: ID
+  ownerId: ID
+  detectedAt: Time
+  slaDeadline: Time
+  assetIds: [ID!]
+  vulnerabilityIds: [ID!]
+}
+
+input UpdateIncidentInput {
+  name: String
+  area: String
+  description: String
+  impactSummary: String
+  impactRating: String
+  classification: [String!]
+  regulatoryBreach: Boolean
+  ownerId: ID
+  status: String
+  rootCause: String
+  rootCauseCategory: String
+  correctiveActions: String
+  preventiveActions: String
+  containedAt: Time
+  resolvedAt: Time
+  closedAt: Time
+}
+
+input AddIncidentActionInput {
+  actionType: String!
+  description: String!
+  ownerId: ID
+  dueDate: Time
+}
+
+input UpdateIncidentActionInput {
+  description: String
+  ownerId: ID
+  dueDate: Time
+  status: String
+}

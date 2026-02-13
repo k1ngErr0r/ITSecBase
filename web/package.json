@@ -1,0 +1,33 @@
+{
+  "name": "secbase-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "relay": "relay-compiler",
+    "relay:watch": "relay-compiler --watch"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-relay": "^17.0.0",
+    "react-router-dom": "^6.22.3",
+    "relay-runtime": "^17.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@types/react-relay": "^16.0.6",
+    "@types/relay-runtime": "^17.0.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "relay-compiler": "^17.0.0",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.2"
+  }
+}

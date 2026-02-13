@@ -1,0 +1,106 @@
+"""
+Dashboard aggregate types for widgets.
+"""
+
+type VulnOverview {
+  totalOpen: Int!
+  criticalCount: Int!
+  highCount: Int!
+  mediumCount: Int!
+  lowCount: Int!
+  mttrDays: Float
+  topAssets: [AssetVulnCount!]!
+  topCves: [CveCount!]!
+}
+
+type AssetVulnCount {
+  asset: Asset!
+  count: Int!
+}
+
+type CveCount {
+  cveId: String!
+  count: Int!
+  severity: String
+}
+
+type RiskPosture {
+  countsByLevel: [LevelCount!]!
+  heatmapData: [HeatmapCell!]!
+}
+
+type LevelCount {
+  level: String!
+  count: Int!
+}
+
+type HeatmapCell {
+  likelihood: Int!
+  impact: Int!
+  count: Int!
+}
+
+type IncidentStatusSummary {
+  openByImpact: [ImpactCount!]!
+  slaBreaches: Int!
+  recentTimeline: [IncidentTimelineEntry!]!
+}
+
+type ImpactCount {
+  impact: String!
+  count: Int!
+}
+
+type IncidentTimelineEntry {
+  incident: Incident!
+  date: Time!
+}
+
+type ComplianceSnapshot {
+  implementedPct: Float!
+  partiallyImplementedPct: Float!
+  notImplementedPct: Float!
+  notApplicablePct: Float!
+  topGaps: [ControlGap!]!
+}
+
+type ControlGap {
+  control: IsoControl!
+  status: String!
+}
+
+type DrReadiness {
+  nextTestDate: Time
+  lastTestDate: Time
+  lastTestResult: String
+  playbookVersion: String
+}
+
+type MyTasks {
+  assignedVulnCount: Int!
+  assignedRiskCount: Int!
+  assignedIncidentCount: Int!
+  assignedActionCount: Int!
+  recentVulns: [Vulnerability!]!
+  recentRisks: [Risk!]!
+  recentIncidents: [Incident!]!
+}
+
+type CveFeedEntry {
+  id: ID!
+  cveId: String!
+  score: Float
+  affectedProducts: [String!]!
+  publishedDate: Time
+  link: String!
+}
+
+extend type Query {
+  vulnOverview: VulnOverview!
+  riskPosture: RiskPosture!
+  incidentStatus: IncidentStatusSummary!
+  complianceSnapshot: ComplianceSnapshot!
+  drReadiness: DrReadiness!
+  myTasks: MyTasks!
+  cveFeed(limit: Int): [CveFeedEntry!]!
+}

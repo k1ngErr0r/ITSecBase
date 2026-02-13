@@ -1,0 +1,70 @@
+"""
+Common types shared across entities: Comments and Evidence.
+"""
+
+type Comment implements Node {
+  id: ID!
+  entityType: String!
+  entityId: ID!
+  body: String!
+  author: User
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type CommentConnection {
+  edges: [CommentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type CommentEdge {
+  cursor: String!
+  node: Comment!
+}
+
+type Evidence implements Node {
+  id: ID!
+  entityType: String!
+  entityId: ID!
+  fileName: String!
+  filePath: String!
+  fileSize: Int!
+  contentType: String!
+  uploadedBy: User
+  createdAt: Time!
+}
+
+type EvidenceConnection {
+  edges: [EvidenceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type EvidenceEdge {
+  cursor: String!
+  node: Evidence!
+}
+
+extend type Mutation {
+  addComment(input: AddCommentInput!): Comment!
+  updateComment(id: ID!, body: String!): Comment!
+  deleteComment(id: ID!): Boolean!
+
+  addEvidence(input: AddEvidenceInput!): Evidence!
+  deleteEvidence(id: ID!): Boolean!
+}
+
+input AddCommentInput {
+  entityType: String!
+  entityId: ID!
+  body: String!
+}
+
+input AddEvidenceInput {
+  entityType: String!
+  entityId: ID!
+  fileName: String!
+  fileSize: Int!
+  contentType: String!
+}

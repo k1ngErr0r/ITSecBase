@@ -1,0 +1,79 @@
+"""
+Root schema for SecBase GraphQL API.
+Provides Relay-compatible Node interface and pagination types.
+"""
+
+scalar Time
+
+"""
+Relay Node interface - all queryable entities implement this.
+"""
+interface Node {
+  id: ID!
+}
+
+"""
+Relay-compatible page info for cursor-based pagination.
+"""
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Query {
+  """
+  Relay node refetch query.
+  """
+  node(id: ID!): Node
+
+  """
+  Application health check.
+  """
+  health: Boolean!
+}
+
+type Mutation {
+  """
+  Authenticate a user and return access + refresh tokens.
+  """
+  login(input: LoginInput!): AuthPayload!
+
+  """
+  Exchange a refresh token for a new access token.
+  """
+  refreshToken(token: String!): AuthPayload!
+
+  """
+  Generate a TOTP secret for 2FA setup. Requires authentication.
+  """
+  setupTotp: TotpSetupPayload!
+
+  """
+  Verify a TOTP code to enable 2FA. Requires authentication.
+  """
+  verifyTotp(code: String!): TotpVerifyPayload!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+  totpCode: String
+}
+
+type AuthPayload {
+  accessToken: String!
+  refreshToken: String!
+  user: User!
+}
+
+type TotpSetupPayload {
+  secret: String!
+  provisioningUrl: String!
+  backupCodes: [String!]!
+}
+
+type TotpVerifyPayload {
+  success: Boolean!
+}
