@@ -40,7 +40,7 @@ jobs:
         working-directory: api
         run: go build ./...
 
-      - name: Test
+      - name: Test with coverage
         working-directory: api
         env:
           POSTGRES_HOST: localhost
@@ -48,7 +48,24 @@ jobs:
           POSTGRES_USER: secbase
           POSTGRES_PASSWORD: testpass
           POSTGRES_DB: secbase_test
-        run: go test ./... -v -count=1
+        run: go test ./... -v -count=1 -coverprofile=coverage.out -covermode=atomic
+
+      - name: Display coverage summary
+        working-directory: api
+        run: go tool cover -func=coverage.out | tail -1
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: api
+          version: latest
+          args: --timeout=5m
+
+      - name: Security scan
+        working-directory: api
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
 
   web:
     name: Web (React)
