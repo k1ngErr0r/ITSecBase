@@ -66,8 +66,8 @@ func (r *Resolver) Asset(ctx context.Context, id string) (*model.Asset, error) {
 // ---- Asset Mutation Resolvers ----
 
 func (r *Resolver) CreateAsset(ctx context.Context, input CreateAssetInput) (*model.Asset, error) {
-	orgID, err := auth.OrgIDFromContext(ctx)
-	if err != nil {
+	orgID, ok := auth.OrgIDFromContext(ctx)
+	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 

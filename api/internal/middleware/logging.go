@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 type responseWriter struct {
@@ -28,6 +30,7 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 }
 
 // RequestLogger logs each HTTP request with structured fields.
+// Includes trace_id and span_id when OpenTelemetry tracing is active.
 func RequestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -44,6 +47,15 @@ func RequestLogger(next http.Handler) http.Handler {
 			slog.Int("bytes", rw.bytesWritten),
 			slog.String("remote", r.RemoteAddr),
 			slog.String("user_agent", r.UserAgent()),
+		}
+
+		// Correlate logs with traces when OTel is active
+		spanCtx := trace.SpanContextFromContext(r.Context())
+		if spanCtx.IsValid() {
+			attrs = append(attrs,
+				slog.String("trace_id", spanCtx.TraceID().String()),
+				slog.String("span_id", spanCtx.SpanID().String()),
+			)
 		}
 
 		level := slog.LevelInfo

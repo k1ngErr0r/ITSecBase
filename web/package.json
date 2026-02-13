@@ -11,6 +11,14 @@
     "relay:watch": "relay-compiler --watch"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/context-zone": "^1.23.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.50.0",
+    "@opentelemetry/instrumentation-fetch": "^0.50.0",
+    "@opentelemetry/resources": "^1.23.0",
+    "@opentelemetry/sdk-trace-base": "^1.23.0",
+    "@opentelemetry/sdk-trace-web": "^1.23.0",
+    "@opentelemetry/semantic-conventions": "^1.23.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-relay": "^17.0.0",

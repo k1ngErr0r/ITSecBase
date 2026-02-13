@@ -53,8 +53,8 @@ func (r *Resolver) DrPlan(ctx context.Context, id string) (*model.DrPlan, error)
 }
 
 func (r *Resolver) CreateDrPlan(ctx context.Context, input CreateDrPlanInput) (*model.DrPlan, error) {
-	orgID, err := auth.OrgIDFromContext(ctx)
-	if err != nil {
+	orgID, ok := auth.OrgIDFromContext(ctx)
+	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
@@ -70,7 +70,7 @@ func (r *Resolver) CreateDrPlan(ctx context.Context, input CreateDrPlanInput) (*
 		Status:     "draft",
 	}
 
-	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.DrPlanRepo.Create(ctx, tx, p)
 	})
 	return p, err

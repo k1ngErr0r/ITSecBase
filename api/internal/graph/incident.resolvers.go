@@ -53,8 +53,8 @@ func (r *Resolver) Incident(ctx context.Context, id string) (*model.Incident, er
 }
 
 func (r *Resolver) CreateIncident(ctx context.Context, input CreateIncidentInput) (*model.Incident, error) {
-	orgID, err := auth.OrgIDFromContext(ctx)
-	if err != nil {
+	orgID, ok := auth.OrgIDFromContext(ctx)
+	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
@@ -76,7 +76,7 @@ func (r *Resolver) CreateIncident(ctx context.Context, input CreateIncidentInput
 		inc.Classification = input.Classification
 	}
 
-	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.IncidentRepo.Create(ctx, tx, inc)
 	})
 	return inc, err

@@ -1,0 +1,981 @@
+"""
+Root schema for SecBase GraphQL API.
+Combined schema for Relay compiler.
+"""
+
+scalar Time
+
+"""
+Relay Node interface - all queryable entities implement this.
+"""
+interface Node {
+  id: ID!
+}
+
+"""
+Relay-compatible page info for cursor-based pagination.
+"""
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+# ─── Auth ────────────────────────────────────────────────────────────────────
+
+input LoginInput {
+  email: String!
+  password: String!
+  totpCode: String
+}
+
+type AuthPayload {
+  accessToken: String!
+  refreshToken: String!
+  user: User!
+}
+
+type TotpSetupPayload {
+  secret: String!
+  provisioningUrl: String!
+  backupCodes: [String!]!
+}
+
+type TotpVerifyPayload {
+  success: Boolean!
+}
+
+# ─── User & Group ────────────────────────────────────────────────────────────
+
+type User implements Node {
+  id: ID!
+  email: String!
+  displayName: String!
+  jobTitle: String!
+  department: String!
+  profilePictureUrl: String!
+  status: String!
+  totpEnabled: Boolean!
+  lastLoginAt: Time
+  createdAt: Time!
+  updatedAt: Time!
+  groups(first: Int, after: String): GroupConnection!
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type UserEdge {
+  cursor: String!
+  node: User!
+}
+
+type Group implements Node {
+  id: ID!
+  name: String!
+  description: String!
+  permissions: [String!]!
+  createdAt: Time!
+  members(first: Int, after: String): UserConnection!
+}
+
+type GroupConnection {
+  edges: [GroupEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type GroupEdge {
+  cursor: String!
+  node: Group!
+}
+
+input UserFilter {
+  status: String
+  search: String
+  groupId: ID
+}
+
+input CreateUserInput {
+  email: String!
+  password: String!
+  displayName: String!
+  jobTitle: String
+  department: String
+  groupIds: [ID!]
+}
+
+input UpdateUserInput {
+  displayName: String
+  jobTitle: String
+  department: String
+  status: String
+}
+
+input CreateGroupInput {
+  name: String!
+  description: String
+  permissions: [String!]!
+}
+
+input UpdateGroupInput {
+  name: String
+  description: String
+  permissions: [String!]
+}
+
+input UpdateProfileInput {
+  displayName: String
+  jobTitle: String
+  department: String
+  profilePictureUrl: String
+}
+
+# ─── Asset ───────────────────────────────────────────────────────────────────
+
+type Asset implements Node {
+  id: ID!
+  name: String!
+  assetType: String!
+  make: String!
+  model: String!
+  version: String!
+  businessOwner: User
+  technicalOwner: User
+  ipAddresses: [String!]!
+  hostnames: [String!]!
+  fqdn: String!
+  url: String!
+  locationSite: String!
+  locationDetail: String!
+  environment: String
+  criticality: Int
+  dataClassification: String
+  tags: [String!]!
+  status: String!
+  decommissionDate: Time
+  createdAt: Time!
+  updatedAt: Time!
+  vulnerabilities(first: Int, after: String): VulnerabilityConnection!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+  dependencies: [Asset!]!
+}
+
+type AssetConnection {
+  edges: [AssetEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AssetEdge {
+  cursor: String!
+  node: Asset!
+}
+
+input AssetFilter {
+  assetType: String
+  environment: String
+  criticality: Int
+  status: String
+  ownerId: ID
+  search: String
+  tags: [String!]
+}
+
+input CreateAssetInput {
+  name: String!
+  assetType: String!
+  make: String
+  model: String
+  version: String
+  businessOwnerId: ID
+  technicalOwnerId: ID
+  ipAddresses: [String!]
+  hostnames: [String!]
+  fqdn: String
+  url: String
+  locationSite: String
+  locationDetail: String
+  environment: String
+  criticality: Int
+  dataClassification: String
+  tags: [String!]
+}
+
+input UpdateAssetInput {
+  name: String
+  assetType: String
+  make: String
+  model: String
+  version: String
+  businessOwnerId: ID
+  technicalOwnerId: ID
+  ipAddresses: [String!]
+  hostnames: [String!]
+  fqdn: String
+  url: String
+  locationSite: String
+  locationDetail: String
+  environment: String
+  criticality: Int
+  dataClassification: String
+  tags: [String!]
+  status: String
+}
+
+# ─── Vulnerability ───────────────────────────────────────────────────────────
+
+type Vulnerability implements Node {
+  id: ID!
+  title: String!
+  description: String!
+  source: String!
+  cveIds: [String!]!
+  externalRefs: String
+  cvssScore: Float
+  cvssVector: String!
+  severity: String
+  status: String!
+  discoveryDate: Time
+  dueDate: Time
+  closureDate: Time
+  owner: User
+  analyst: User
+  approver: User
+  tags: [String!]!
+  notes: String!
+  createdAt: Time!
+  updatedAt: Time!
+  assets(first: Int, after: String): AssetConnection!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+  history(first: Int, after: String): VulnerabilityHistoryConnection!
+}
+
+type VulnerabilityConnection {
+  edges: [VulnerabilityEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type VulnerabilityEdge {
+  cursor: String!
+  node: Vulnerability!
+}
+
+type VulnerabilityHistory implements Node {
+  id: ID!
+  fieldName: String!
+  oldValue: String!
+  newValue: String!
+  changedBy: User
+  changedAt: Time!
+}
+
+type VulnerabilityHistoryConnection {
+  edges: [VulnerabilityHistoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type VulnerabilityHistoryEdge {
+  cursor: String!
+  node: VulnerabilityHistory!
+}
+
+input VulnFilter {
+  severity: String
+  status: String
+  assetId: ID
+  ownerId: ID
+  cveId: String
+  tags: [String!]
+  search: String
+  discoveredAfter: Time
+  discoveredBefore: Time
+}
+
+input CreateVulnerabilityInput {
+  title: String!
+  description: String
+  source: String
+  cveIds: [String!]
+  cvssScore: Float
+  cvssVector: String
+  severity: String
+  discoveryDate: Time
+  dueDate: Time
+  ownerId: ID
+  analystId: ID
+  tags: [String!]
+  notes: String
+  assetIds: [ID!]
+}
+
+input UpdateVulnerabilityInput {
+  title: String
+  description: String
+  source: String
+  cveIds: [String!]
+  cvssScore: Float
+  cvssVector: String
+  severity: String
+  status: String
+  dueDate: Time
+  closureDate: Time
+  ownerId: ID
+  analystId: ID
+  approverId: ID
+  tags: [String!]
+  notes: String
+}
+
+input BulkVulnUpdateInput {
+  status: String
+  ownerId: ID
+  tags: [String!]
+}
+
+# ─── Risk ────────────────────────────────────────────────────────────────────
+
+type Risk implements Node {
+  id: ID!
+  title: String!
+  description: String!
+  scenario: String!
+  category: String!
+  source: String!
+  inherentLikelihood: Int
+  inherentImpact: Int
+  residualLikelihood: Int
+  residualImpact: Int
+  calculatedInherentLevel: String
+  calculatedResidualLevel: String
+  status: String!
+  owner: User
+  approver: User
+  reviewDate: Time
+  lastReviewedBy: User
+  createdAt: Time!
+  updatedAt: Time!
+  assets(first: Int, after: String): AssetConnection!
+  treatments: [RiskTreatment!]!
+  controls: [OrgIsoControl!]!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+}
+
+type RiskConnection {
+  edges: [RiskEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type RiskEdge {
+  cursor: String!
+  node: Risk!
+}
+
+type RiskTreatment implements Node {
+  id: ID!
+  action: String!
+  responsible: User
+  deadline: Time
+  status: String!
+  createdAt: Time!
+}
+
+type RiskMatrixConfig {
+  id: ID!
+  likelihoodLabels: [String!]!
+  impactLabels: [String!]!
+  levelThresholds: String!
+}
+
+input RiskFilter {
+  category: String
+  status: String
+  ownerId: ID
+  minInherentLevel: Int
+  search: String
+}
+
+input CreateRiskInput {
+  title: String!
+  description: String
+  scenario: String
+  category: String
+  source: String
+  inherentLikelihood: Int
+  inherentImpact: Int
+  residualLikelihood: Int
+  residualImpact: Int
+  ownerId: ID
+  approverId: ID
+  reviewDate: Time
+  assetIds: [ID!]
+  controlIds: [ID!]
+}
+
+input UpdateRiskInput {
+  title: String
+  description: String
+  scenario: String
+  category: String
+  source: String
+  inherentLikelihood: Int
+  inherentImpact: Int
+  residualLikelihood: Int
+  residualImpact: Int
+  status: String
+  ownerId: ID
+  approverId: ID
+  reviewDate: Time
+}
+
+input AddRiskTreatmentInput {
+  action: String!
+  responsibleId: ID
+  deadline: Time
+}
+
+input UpdateRiskTreatmentInput {
+  action: String
+  responsibleId: ID
+  deadline: Time
+  status: String
+}
+
+input UpdateRiskMatrixConfigInput {
+  likelihoodLabels: [String!]!
+  impactLabels: [String!]!
+  levelThresholds: String!
+}
+
+# ─── Incident ────────────────────────────────────────────────────────────────
+
+type Incident implements Node {
+  id: ID!
+  name: String!
+  area: String!
+  description: String!
+  impactSummary: String!
+  impactRating: String
+  classification: [String!]!
+  regulatoryBreach: Boolean!
+  reporter: User
+  owner: User
+  status: String!
+  rootCause: String!
+  rootCauseCategory: String!
+  correctiveActions: String!
+  preventiveActions: String!
+  detectedAt: Time
+  openedAt: Time!
+  containedAt: Time
+  resolvedAt: Time
+  closedAt: Time
+  slaDeadline: Time
+  createdAt: Time!
+  updatedAt: Time!
+  assets(first: Int, after: String): AssetConnection!
+  vulnerabilities(first: Int, after: String): VulnerabilityConnection!
+  actions: [IncidentAction!]!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+}
+
+type IncidentConnection {
+  edges: [IncidentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IncidentEdge {
+  cursor: String!
+  node: Incident!
+}
+
+type IncidentAction implements Node {
+  id: ID!
+  actionType: String
+  description: String!
+  owner: User
+  dueDate: Time
+  status: String!
+  createdAt: Time!
+}
+
+input IncidentFilter {
+  impactRating: String
+  status: String
+  ownerId: ID
+  search: String
+  openedAfter: Time
+  openedBefore: Time
+}
+
+input CreateIncidentInput {
+  name: String!
+  area: String
+  description: String
+  impactSummary: String
+  impactRating: String
+  classification: [String!]
+  regulatoryBreach: Boolean
+  reporterId: ID
+  ownerId: ID
+  detectedAt: Time
+  slaDeadline: Time
+  assetIds: [ID!]
+  vulnerabilityIds: [ID!]
+}
+
+input UpdateIncidentInput {
+  name: String
+  area: String
+  description: String
+  impactSummary: String
+  impactRating: String
+  classification: [String!]
+  regulatoryBreach: Boolean
+  ownerId: ID
+  status: String
+  rootCause: String
+  rootCauseCategory: String
+  correctiveActions: String
+  preventiveActions: String
+  containedAt: Time
+  resolvedAt: Time
+  closedAt: Time
+}
+
+input AddIncidentActionInput {
+  actionType: String!
+  description: String!
+  ownerId: ID
+  dueDate: Time
+}
+
+input UpdateIncidentActionInput {
+  description: String
+  ownerId: ID
+  dueDate: Time
+  status: String
+}
+
+# ─── DR Plan ─────────────────────────────────────────────────────────────────
+
+type DrPlan implements Node {
+  id: ID!
+  name: String!
+  scope: String!
+  owner: User
+  version: String!
+  rtoMinutes: Int
+  rpoMinutes: Int
+  playbook: String!
+  status: String!
+  createdAt: Time!
+  updatedAt: Time!
+  assets(first: Int, after: String): AssetConnection!
+  tests: [DrTest!]!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+}
+
+type DrPlanConnection {
+  edges: [DrPlanEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type DrPlanEdge {
+  cursor: String!
+  node: DrPlan!
+}
+
+type DrTest implements Node {
+  id: ID!
+  testType: String
+  plannedDate: Time
+  actualDate: Time
+  result: String
+  observations: String!
+  createdAt: Time!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+}
+
+input DrPlanFilter {
+  status: String
+  ownerId: ID
+  search: String
+}
+
+input CreateDrPlanInput {
+  name: String!
+  scope: String
+  ownerId: ID
+  version: String
+  rtoMinutes: Int
+  rpoMinutes: Int
+  playbook: String
+  assetIds: [ID!]
+}
+
+input UpdateDrPlanInput {
+  name: String
+  scope: String
+  ownerId: ID
+  version: String
+  rtoMinutes: Int
+  rpoMinutes: Int
+  playbook: String
+  status: String
+}
+
+input RecordDrTestInput {
+  testType: String!
+  plannedDate: Time
+  actualDate: Time
+  result: String
+  observations: String
+}
+
+input UpdateDrTestInput {
+  actualDate: Time
+  result: String
+  observations: String
+}
+
+# ─── ISO 27001 ───────────────────────────────────────────────────────────────
+
+type IsoControl implements Node {
+  id: ID!
+  controlId: String!
+  name: String!
+  theme: String!
+  description: String!
+}
+
+type OrgIsoControl implements Node {
+  id: ID!
+  control: IsoControl!
+  applicability: String!
+  nonApplicabilityJustification: String!
+  implementationStatus: String!
+  implementationDescription: String!
+  responsibleOwner: User
+  createdAt: Time!
+  updatedAt: Time!
+  assets(first: Int, after: String): AssetConnection!
+  risks(first: Int, after: String): RiskConnection!
+  comments(first: Int, after: String): CommentConnection!
+  evidence(first: Int, after: String): EvidenceConnection!
+}
+
+type OrgIsoControlConnection {
+  edges: [OrgIsoControlEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type OrgIsoControlEdge {
+  cursor: String!
+  node: OrgIsoControl!
+}
+
+input OrgIsoControlFilter {
+  theme: String
+  implementationStatus: String
+  applicability: String
+  ownerId: ID
+  search: String
+}
+
+input UpdateOrgIsoControlInput {
+  applicability: String
+  nonApplicabilityJustification: String
+  implementationStatus: String
+  implementationDescription: String
+  responsibleOwnerId: ID
+}
+
+# ─── Comments & Evidence ────────────────────────────────────────────────────
+
+type Comment implements Node {
+  id: ID!
+  entityType: String!
+  entityId: ID!
+  body: String!
+  author: User
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type CommentConnection {
+  edges: [CommentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type CommentEdge {
+  cursor: String!
+  node: Comment!
+}
+
+type Evidence implements Node {
+  id: ID!
+  entityType: String!
+  entityId: ID!
+  fileName: String!
+  filePath: String!
+  fileSize: Int!
+  contentType: String!
+  uploadedBy: User
+  createdAt: Time!
+}
+
+type EvidenceConnection {
+  edges: [EvidenceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type EvidenceEdge {
+  cursor: String!
+  node: Evidence!
+}
+
+input AddCommentInput {
+  entityType: String!
+  entityId: ID!
+  body: String!
+}
+
+input AddEvidenceInput {
+  entityType: String!
+  entityId: ID!
+  fileName: String!
+  fileSize: Int!
+  contentType: String!
+}
+
+# ─── Dashboard ───────────────────────────────────────────────────────────────
+
+type VulnOverview {
+  totalOpen: Int!
+  criticalCount: Int!
+  highCount: Int!
+  mediumCount: Int!
+  lowCount: Int!
+  mttrDays: Float
+  topAssets: [AssetVulnCount!]!
+  topCves: [CveCount!]!
+}
+
+type AssetVulnCount {
+  asset: Asset!
+  count: Int!
+}
+
+type CveCount {
+  cveId: String!
+  count: Int!
+  severity: String
+}
+
+type RiskPosture {
+  countsByLevel: [LevelCount!]!
+  heatmapData: [HeatmapCell!]!
+}
+
+type LevelCount {
+  level: String!
+  count: Int!
+}
+
+type HeatmapCell {
+  likelihood: Int!
+  impact: Int!
+  count: Int!
+}
+
+type IncidentStatusSummary {
+  openByImpact: [ImpactCount!]!
+  slaBreaches: Int!
+  recentTimeline: [IncidentTimelineEntry!]!
+}
+
+type ImpactCount {
+  impact: String!
+  count: Int!
+}
+
+type IncidentTimelineEntry {
+  incident: Incident!
+  date: Time!
+}
+
+type ComplianceSnapshot {
+  implementedPct: Float!
+  partiallyImplementedPct: Float!
+  notImplementedPct: Float!
+  notApplicablePct: Float!
+  topGaps: [ControlGap!]!
+}
+
+type ControlGap {
+  control: IsoControl!
+  status: String!
+}
+
+type DrReadiness {
+  nextTestDate: Time
+  lastTestDate: Time
+  lastTestResult: String
+  playbookVersion: String
+}
+
+type MyTasks {
+  assignedVulnCount: Int!
+  assignedRiskCount: Int!
+  assignedIncidentCount: Int!
+  assignedActionCount: Int!
+  recentVulns: [Vulnerability!]!
+  recentRisks: [Risk!]!
+  recentIncidents: [Incident!]!
+}
+
+type CveFeedEntry {
+  id: ID!
+  cveId: String!
+  score: Float
+  affectedProducts: [String!]!
+  publishedDate: Time
+  link: String!
+}
+
+# ─── Root Query ──────────────────────────────────────────────────────────────
+
+type Query {
+  node(id: ID!): Node
+  health: Boolean!
+
+  # Auth
+  me: User
+
+  # Users
+  users(first: Int, after: String, filter: UserFilter): UserConnection!
+  groups(first: Int, after: String): GroupConnection!
+
+  # Assets
+  assets(first: Int, after: String, filter: AssetFilter): AssetConnection!
+  asset(id: ID!): Asset
+
+  # Vulnerabilities
+  vulnerabilities(first: Int, after: String, filter: VulnFilter): VulnerabilityConnection!
+  vulnerability(id: ID!): Vulnerability
+
+  # Risks
+  risks(first: Int, after: String, filter: RiskFilter): RiskConnection!
+  risk(id: ID!): Risk
+  riskMatrixConfig: RiskMatrixConfig
+
+  # Incidents
+  incidents(first: Int, after: String, filter: IncidentFilter): IncidentConnection!
+  incident(id: ID!): Incident
+
+  # DR Plans
+  drPlans(first: Int, after: String, filter: DrPlanFilter): DrPlanConnection!
+  drPlan(id: ID!): DrPlan
+
+  # ISO Controls
+  isoControls(theme: String): [IsoControl!]!
+  orgIsoControls(first: Int, after: String, filter: OrgIsoControlFilter): OrgIsoControlConnection!
+  orgIsoControl(id: ID!): OrgIsoControl
+
+  # Dashboard
+  vulnOverview: VulnOverview!
+  riskPosture: RiskPosture!
+  incidentStatus: IncidentStatusSummary!
+  complianceSnapshot: ComplianceSnapshot!
+  drReadiness: DrReadiness!
+  myTasks: MyTasks!
+  cveFeed(limit: Int): [CveFeedEntry!]!
+}
+
+# ─── Root Mutation ───────────────────────────────────────────────────────────
+
+type Mutation {
+  # Auth
+  login(input: LoginInput!): AuthPayload!
+  refreshToken(token: String!): AuthPayload!
+  setupTotp: TotpSetupPayload!
+  verifyTotp(code: String!): TotpVerifyPayload!
+
+  # Users
+  createUser(input: CreateUserInput!): User!
+  updateUser(id: ID!, input: UpdateUserInput!): User!
+  disableUser(id: ID!): User!
+  enableUser(id: ID!): User!
+  changePassword(currentPassword: String!, newPassword: String!): Boolean!
+  updateProfile(input: UpdateProfileInput!): User!
+
+  # Groups
+  createGroup(input: CreateGroupInput!): Group!
+  updateGroup(id: ID!, input: UpdateGroupInput!): Group!
+  deleteGroup(id: ID!): Boolean!
+  addUserToGroup(userId: ID!, groupId: ID!): Boolean!
+  removeUserFromGroup(userId: ID!, groupId: ID!): Boolean!
+
+  # Assets
+  createAsset(input: CreateAssetInput!): Asset!
+  updateAsset(id: ID!, input: UpdateAssetInput!): Asset!
+  deleteAsset(id: ID!): Boolean!
+
+  # Vulnerabilities
+  createVulnerability(input: CreateVulnerabilityInput!): Vulnerability!
+  updateVulnerability(id: ID!, input: UpdateVulnerabilityInput!): Vulnerability!
+  deleteVulnerability(id: ID!): Boolean!
+  assignVulnerabilityOwner(id: ID!, ownerId: ID!): Vulnerability!
+  bulkUpdateVulnerabilities(ids: [ID!]!, input: BulkVulnUpdateInput!): [Vulnerability!]!
+
+  # Risks
+  createRisk(input: CreateRiskInput!): Risk!
+  updateRisk(id: ID!, input: UpdateRiskInput!): Risk!
+  deleteRisk(id: ID!): Boolean!
+  addRiskTreatment(riskId: ID!, input: AddRiskTreatmentInput!): RiskTreatment!
+  updateRiskTreatment(id: ID!, input: UpdateRiskTreatmentInput!): RiskTreatment!
+  updateRiskMatrixConfig(input: UpdateRiskMatrixConfigInput!): RiskMatrixConfig!
+
+  # Incidents
+  createIncident(input: CreateIncidentInput!): Incident!
+  updateIncident(id: ID!, input: UpdateIncidentInput!): Incident!
+  deleteIncident(id: ID!): Boolean!
+  addIncidentAction(incidentId: ID!, input: AddIncidentActionInput!): IncidentAction!
+  updateIncidentAction(id: ID!, input: UpdateIncidentActionInput!): IncidentAction!
+
+  # DR Plans
+  createDrPlan(input: CreateDrPlanInput!): DrPlan!
+  updateDrPlan(id: ID!, input: UpdateDrPlanInput!): DrPlan!
+  deleteDrPlan(id: ID!): Boolean!
+  recordDrTest(planId: ID!, input: RecordDrTestInput!): DrTest!
+  updateDrTest(id: ID!, input: UpdateDrTestInput!): DrTest!
+
+  # ISO Controls
+  updateOrgIsoControl(id: ID!, input: UpdateOrgIsoControlInput!): OrgIsoControl!
+
+  # Comments & Evidence
+  addComment(input: AddCommentInput!): Comment!
+  updateComment(id: ID!, body: String!): Comment!
+  deleteComment(id: ID!): Boolean!
+  addEvidence(input: AddEvidenceInput!): Evidence!
+  deleteEvidence(id: ID!): Boolean!
+}

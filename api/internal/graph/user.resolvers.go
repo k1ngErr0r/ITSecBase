@@ -13,13 +13,13 @@ import (
 // ---- User Query Resolvers ----
 
 func (r *Resolver) Me(ctx context.Context) (*model.User, error) {
-	userID, err := auth.UserIDFromContext(ctx)
-	if err != nil {
+	userID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
 	var user *model.User
-	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		user, err = r.UserRepo.GetByID(ctx, tx, userID)
 		return err
@@ -71,8 +71,8 @@ func (r *Resolver) Users(ctx context.Context, first *int, after *string, filter 
 // ---- User Mutation Resolvers ----
 
 func (r *Resolver) CreateUser(ctx context.Context, email, password, displayName string, jobTitle, department *string, groupIDs []string) (*model.User, error) {
-	orgID, err := auth.OrgIDFromContext(ctx)
-	if err != nil {
+	orgID, ok := auth.OrgIDFromContext(ctx)
+	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
@@ -148,12 +148,12 @@ func (r *Resolver) EnableUser(ctx context.Context, id string) (*model.User, erro
 }
 
 func (r *Resolver) ChangePassword(ctx context.Context, currentPassword, newPassword string) (bool, error) {
-	userID, err := auth.UserIDFromContext(ctx)
-	if err != nil {
+	userID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
 		return false, fmt.Errorf("authentication required")
 	}
 
-	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		user, err := r.UserRepo.GetByID(ctx, tx, userID)
 		if err != nil {
 			return err
@@ -183,13 +183,13 @@ func (r *Resolver) ChangePassword(ctx context.Context, currentPassword, newPassw
 }
 
 func (r *Resolver) UpdateProfile(ctx context.Context, displayName, jobTitle, department, profilePictureURL *string) (*model.User, error) {
-	userID, err := auth.UserIDFromContext(ctx)
-	if err != nil {
+	userID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
 	var user *model.User
-	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		user, err = r.UserRepo.GetByID(ctx, tx, userID)
 		if err != nil {
@@ -256,8 +256,8 @@ func (r *Resolver) Groups(ctx context.Context, first *int, after *string) (*Grou
 }
 
 func (r *Resolver) CreateGroup(ctx context.Context, name string, description *string, permissions []string) (*model.Group, error) {
-	orgID, err := auth.OrgIDFromContext(ctx)
-	if err != nil {
+	orgID, ok := auth.OrgIDFromContext(ctx)
+	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
@@ -270,7 +270,7 @@ func (r *Resolver) CreateGroup(ctx context.Context, name string, description *st
 		g.Description = *description
 	}
 
-	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.UserRepo.CreateGroup(ctx, tx, g)
 	})
 	return g, err

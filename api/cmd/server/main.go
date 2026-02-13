@@ -69,16 +69,14 @@ func main() {
 	}
 	defer db.Close()
 
-	// Setup GraphQL server
-	resolver := &graph.Resolver{
-		DB:     db,
-		Config: cfg,
-	}
+	// Setup GraphQL server with all dependencies wired
+	resolver := graph.NewResolver(db, cfg)
 
-	// NOTE: generated.NewExecutableSchema will be available after running gqlgen generate.
-	// For now, we set up the router structure. The GraphQL handler will be added
-	// once the schema is generated.
+	// NOTE: After running `gqlgen generate`, uncomment the following line
+	// and remove the placeholder handler below:
+	// srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	_ = resolver
+	_ = handler.NewDefaultServer // ensure import is used
 
 	// Build router
 	r := chi.NewRouter()
@@ -86,6 +84,7 @@ func main() {
 	// Global middleware
 	r.Use(chimw.RequestID)
 	r.Use(chimw.RealIP)
+	r.Use(middleware.TracingMiddleware)
 	r.Use(middleware.RequestLogger)
 	r.Use(chimw.Recoverer)
 	r.Use(cors.Handler(cors.Options{
@@ -102,11 +101,8 @@ func main() {
 	r.Use(middleware.TenantMiddleware)
 
 	// GraphQL endpoint
-	// TODO: Replace with actual gqlgen handler after running `go run github.com/99designs/gqlgen generate`
-	// srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
+	// TODO: Replace with gqlgen handler after running `go run github.com/99designs/gqlgen generate`
 	// r.Handle("/graphql", srv)
-
-	// Placeholder handler until gqlgen is generated
 	r.Handle("/graphql", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"data":null,"errors":[{"message":"GraphQL schema not yet generated. Run: go run github.com/99designs/gqlgen generate"}]}`))
@@ -153,12 +149,4 @@ func main() {
 	}
 
 	slog.Info("server stopped")
-}
-
-// gqlgenHandler creates the GraphQL handler once generated code is available.
-// Uncomment and use after running gqlgen generate.
-func gqlgenHandler(resolver *graph.Resolver) http.Handler {
-	_ = handler.NewDefaultServer
-	// return handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
-	return nil
 }

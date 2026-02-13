@@ -199,13 +199,13 @@ func (r *Resolver) RefreshToken(ctx context.Context, token string) (*AuthPayload
 }
 
 func (r *Resolver) SetupTotp(ctx context.Context) (*TotpSetupPayload, error) {
-	userID, err := auth.UserIDFromContext(ctx)
-	if err != nil {
+	userID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
 	var result *TotpSetupPayload
-	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		user, err := r.UserRepo.GetByID(ctx, tx, userID)
 		if err != nil {
 			return err
@@ -237,12 +237,12 @@ func (r *Resolver) SetupTotp(ctx context.Context) (*TotpSetupPayload, error) {
 }
 
 func (r *Resolver) VerifyTotp(ctx context.Context, code string) (*TotpVerifyPayload, error) {
-	userID, err := auth.UserIDFromContext(ctx)
-	if err != nil {
+	userID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
-	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		user, err := r.UserRepo.GetByID(ctx, tx, userID)
 		if err != nil {
 			return err

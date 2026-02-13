@@ -24,7 +24,7 @@ export default function Login() {
             login(input: $input) {
               accessToken
               refreshToken
-              user { id email displayName }
+              user { id email displayName totpEnabled }
             }
           }`,
           variables: {
@@ -47,9 +47,18 @@ export default function Login() {
         return
       }
 
-      const { accessToken, refreshToken } = data.data.login
+      const { accessToken, refreshToken, user } = data.data.login
       localStorage.setItem('secbase_access_token', accessToken)
       localStorage.setItem('secbase_refresh_token', refreshToken)
+      localStorage.setItem(
+        'secbase_user',
+        JSON.stringify({
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          totpEnabled: user.totpEnabled,
+        }),
+      )
       navigate('/')
     } catch {
       setError('Network error. Please try again.')

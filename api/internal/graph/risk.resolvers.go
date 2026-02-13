@@ -53,8 +53,8 @@ func (r *Resolver) Risk(ctx context.Context, id string) (*model.Risk, error) {
 }
 
 func (r *Resolver) CreateRisk(ctx context.Context, input CreateRiskInput) (*model.Risk, error) {
-	orgID, err := auth.OrgIDFromContext(ctx)
-	if err != nil {
+	orgID, ok := auth.OrgIDFromContext(ctx)
+	if !ok {
 		return nil, fmt.Errorf("authentication required")
 	}
 
@@ -73,7 +73,7 @@ func (r *Resolver) CreateRisk(ctx context.Context, input CreateRiskInput) (*mode
 		OwnerID:            input.OwnerID,
 	}
 
-	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.RiskRepo.Create(ctx, tx, risk)
 	})
 	return risk, err
