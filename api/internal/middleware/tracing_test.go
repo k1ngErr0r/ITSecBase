@@ -204,23 +204,23 @@ func TestTracingMiddleware_WithoutOrgID(t *testing.T) {
 
 func TestTracingMiddleware_StatusCodeAttributes(t *testing.T) {
 	tests := []struct {
-		name       string
-		statusCode int
+		name        string
+		statusCode  int
 		expectError bool
 	}{
 		{
-			name:       "2xx success",
-			statusCode: http.StatusOK,
+			name:        "2xx success",
+			statusCode:  http.StatusOK,
 			expectError: false,
 		},
 		{
-			name:       "4xx client error",
-			statusCode: http.StatusBadRequest,
+			name:        "4xx client error",
+			statusCode:  http.StatusBadRequest,
 			expectError: false,
 		},
 		{
-			name:       "5xx server error",
-			statusCode: http.StatusInternalServerError,
+			name:        "5xx server error",
+			statusCode:  http.StatusInternalServerError,
 			expectError: true,
 		},
 	}

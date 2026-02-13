@@ -59,54 +59,54 @@ func TestRequestLogger_LogsRequest(t *testing.T) {
 
 func TestRequestLogger_StatusCode(t *testing.T) {
 	tests := []struct {
-		name           string
-		statusCode     int
-		expectedLevel  string
-		handlerFunc    http.HandlerFunc
+		name          string
+		statusCode    int
+		expectedLevel string
+		handlerFunc   http.HandlerFunc
 	}{
 		{
-			name:       "200 OK",
-			statusCode: http.StatusOK,
+			name:          "200 OK",
+			statusCode:    http.StatusOK,
 			expectedLevel: "INFO",
 			handlerFunc: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
 		},
 		{
-			name:       "201 Created",
-			statusCode: http.StatusCreated,
+			name:          "201 Created",
+			statusCode:    http.StatusCreated,
 			expectedLevel: "INFO",
 			handlerFunc: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusCreated)
 			},
 		},
 		{
-			name:       "400 Bad Request",
-			statusCode: http.StatusBadRequest,
+			name:          "400 Bad Request",
+			statusCode:    http.StatusBadRequest,
 			expectedLevel: "WARN",
 			handlerFunc: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 			},
 		},
 		{
-			name:       "404 Not Found",
-			statusCode: http.StatusNotFound,
+			name:          "404 Not Found",
+			statusCode:    http.StatusNotFound,
 			expectedLevel: "WARN",
 			handlerFunc: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 			},
 		},
 		{
-			name:       "500 Internal Server Error",
-			statusCode: http.StatusInternalServerError,
+			name:          "500 Internal Server Error",
+			statusCode:    http.StatusInternalServerError,
 			expectedLevel: "ERROR",
 			handlerFunc: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 			},
 		},
 		{
-			name:       "503 Service Unavailable",
-			statusCode: http.StatusServiceUnavailable,
+			name:          "503 Service Unavailable",
+			statusCode:    http.StatusServiceUnavailable,
 			expectedLevel: "ERROR",
 			handlerFunc: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusServiceUnavailable)
