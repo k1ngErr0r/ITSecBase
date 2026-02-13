@@ -71,12 +71,7 @@ func main() {
 
 	// Setup GraphQL server with all dependencies wired
 	resolver := graph.NewResolver(db, cfg)
-
-	// NOTE: After running `gqlgen generate`, uncomment the following line
-	// and remove the placeholder handler below:
-	// srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
-	_ = resolver
-	_ = handler.NewDefaultServer // ensure import is used
+	gqlSrv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 
 	// Build router
 	r := chi.NewRouter()
@@ -101,12 +96,7 @@ func main() {
 	r.Use(middleware.TenantMiddleware)
 
 	// GraphQL endpoint
-	// TODO: Replace with gqlgen handler after running `go run github.com/99designs/gqlgen generate`
-	// r.Handle("/graphql", srv)
-	r.Handle("/graphql", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"data":null,"errors":[{"message":"GraphQL schema not yet generated. Run: go run github.com/99designs/gqlgen generate"}]}`))
-	}))
+	r.Handle("/graphql", gqlSrv)
 
 	// Playground
 	r.Get("/", playground.Handler("SecBase GraphQL", "/graphql"))

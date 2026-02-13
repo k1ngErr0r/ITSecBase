@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from './components/layout/MainLayout'
+import ProtectedRoute from './components/auth/ProtectedRoute'
 import Dashboard from './pages/Dashboard'
 import AssetList from './pages/assets/AssetList'
 import AssetDetail from './pages/assets/AssetDetail'
@@ -27,8 +28,8 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/setup-2fa" element={<Setup2FA />} />
 
-      {/* App routes (with layout) */}
-      <Route element={<MainLayout />}>
+      {/* App routes (with layout, protected) */}
+      <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route path="/" element={<Dashboard />} />
 
         {/* Assets */}
