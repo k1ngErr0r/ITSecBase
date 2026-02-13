@@ -17,125 +17,61 @@ import (
 
 // Reporter is the resolver for the reporter field.
 func (r *incidentResolver) Reporter(ctx context.Context, obj *model.Incident) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Reporter - reporter"))
+	if obj.ReporterID == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.ReporterID)
 }
 
 // Owner is the resolver for the owner field.
 func (r *incidentResolver) Owner(ctx context.Context, obj *model.Incident) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Owner - owner"))
+	if obj.OwnerID == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.OwnerID)
 }
 
 // Assets is the resolver for the assets field.
 func (r *incidentResolver) Assets(ctx context.Context, obj *model.Incident, first *int, after *string) (*model1.AssetConnection, error) {
-	panic(fmt.Errorf("not implemented: Assets - assets"))
+	return &model1.AssetConnection{Edges: []*model1.AssetEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
 }
 
 // Vulnerabilities is the resolver for the vulnerabilities field.
 func (r *incidentResolver) Vulnerabilities(ctx context.Context, obj *model.Incident, first *int, after *string) (*model1.VulnerabilityConnection, error) {
-	panic(fmt.Errorf("not implemented: Vulnerabilities - vulnerabilities"))
+	return &model1.VulnerabilityConnection{Edges: []*model1.VulnerabilityEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
 }
 
 // Actions is the resolver for the actions field.
 func (r *incidentResolver) Actions(ctx context.Context, obj *model.Incident) ([]*model.IncidentAction, error) {
-	panic(fmt.Errorf("not implemented: Actions - actions"))
+	var actions []*model.IncidentAction
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		actions, err = r.IncidentRepo.ListActions(ctx, tx, obj.ID)
+		return err
+	})
+	return actions, err
 }
 
 // Comments is the resolver for the comments field.
 func (r *incidentResolver) Comments(ctx context.Context, obj *model.Incident, first *int, after *string) (*model1.CommentConnection, error) {
-	panic(fmt.Errorf("not implemented: Comments - comments"))
+	return r.entityComments(ctx, "incident", obj.ID, first, after)
 }
 
 // Evidence is the resolver for the evidence field.
 func (r *incidentResolver) Evidence(ctx context.Context, obj *model.Incident, first *int, after *string) (*model1.EvidenceConnection, error) {
-	panic(fmt.Errorf("not implemented: Evidence - evidence"))
+	return r.entityEvidence(ctx, "incident", obj.ID, first, after)
 }
 
 // Owner is the resolver for the owner field.
 func (r *incidentActionResolver) Owner(ctx context.Context, obj *model.IncidentAction) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Owner - owner"))
+	if obj.OwnerID == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.OwnerID)
 }
 
 // CreateIncident is the resolver for the createIncident field.
 func (r *mutationResolver) CreateIncident(ctx context.Context, input model1.CreateIncidentInput) (*model.Incident, error) {
-	panic(fmt.Errorf("not implemented: CreateIncident - createIncident"))
-}
-
-// UpdateIncident is the resolver for the updateIncident field.
-func (r *mutationResolver) UpdateIncident(ctx context.Context, id string, input model1.UpdateIncidentInput) (*model.Incident, error) {
-	panic(fmt.Errorf("not implemented: UpdateIncident - updateIncident"))
-}
-
-// DeleteIncident is the resolver for the deleteIncident field.
-func (r *mutationResolver) DeleteIncident(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteIncident - deleteIncident"))
-}
-
-// AddIncidentAction is the resolver for the addIncidentAction field.
-func (r *mutationResolver) AddIncidentAction(ctx context.Context, incidentID string, input model1.AddIncidentActionInput) (*model.IncidentAction, error) {
-	panic(fmt.Errorf("not implemented: AddIncidentAction - addIncidentAction"))
-}
-
-// UpdateIncidentAction is the resolver for the updateIncidentAction field.
-func (r *mutationResolver) UpdateIncidentAction(ctx context.Context, id string, input model1.UpdateIncidentActionInput) (*model.IncidentAction, error) {
-	panic(fmt.Errorf("not implemented: UpdateIncidentAction - updateIncidentAction"))
-}
-
-// Incidents is the resolver for the incidents field.
-func (r *queryResolver) Incidents(ctx context.Context, first *int, after *string, filter *model1.IncidentFilter) (*model1.IncidentConnection, error) {
-	panic(fmt.Errorf("not implemented: Incidents - incidents"))
-}
-
-// Incident is the resolver for the incident field.
-func (r *queryResolver) Incident(ctx context.Context, id string) (*model.Incident, error) {
-	panic(fmt.Errorf("not implemented: Incident - incident"))
-}
-
-// Incident returns IncidentResolver implementation.
-func (r *Resolver) Incident() IncidentResolver { return &incidentResolver{r} }
-
-// IncidentAction returns IncidentActionResolver implementation.
-func (r *Resolver) IncidentAction() IncidentActionResolver { return &incidentActionResolver{r} }
-
-type incidentResolver struct{ *Resolver }
-type incidentActionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-type IncidentConnection struct {
-	Edges      []*IncidentEdge `json:"edges"`
-	PageInfo   *PageInfo       `json:"pageInfo"`
-	TotalCount int             `json:"totalCount"`
-}
-type IncidentEdge struct {
-	Cursor string          `json:"cursor"`
-	Node   *model.Incident `json:"node"`
-}
-
-func (r *Resolver) Incidents(ctx context.Context, first *int, after *string, filter *repository.IncidentFilter) (*IncidentConnection, error) {
-	params := paginationParams(first, after)
-	var incidents []*model.Incident
-	var pr repository.PaginationResult
-
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		incidents, pr, err = r.IncidentRepo.List(ctx, tx, params, filter)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]*IncidentEdge, len(incidents))
-	for i, inc := range incidents {
-		edges[i] = &IncidentEdge{Cursor: repository.EncodeCursor(i), Node: inc}
-	}
-	return &IncidentConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
-}
-func (r *Resolver) CreateIncident(ctx context.Context, input CreateIncidentInput) (*model.Incident, error) {
 	orgID, ok := auth.OrgIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
@@ -151,20 +87,41 @@ func (r *Resolver) CreateIncident(ctx context.Context, input CreateIncidentInput
 		ImpactSummary:    derefStr(input.ImpactSummary),
 		ImpactRating:     derefStr(input.ImpactRating),
 		RegulatoryBreach: input.RegulatoryBreach != nil && *input.RegulatoryBreach,
-		ReporterID:       &reporterID,
 		OwnerID:          input.OwnerID,
 		Status:           "new",
+		DetectedAt:       input.DetectedAt,
+		SLADeadline:      input.SLADeadline,
+	}
+	if input.ReporterID != nil {
+		inc.ReporterID = input.ReporterID
+	} else {
+		inc.ReporterID = &reporterID
 	}
 	if input.Classification != nil {
 		inc.Classification = input.Classification
 	}
 
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		return r.IncidentRepo.Create(ctx, tx, inc)
+		if err := r.IncidentRepo.Create(ctx, tx, inc); err != nil {
+			return err
+		}
+		for _, aid := range input.AssetIds {
+			if err := r.IncidentRepo.LinkAsset(ctx, tx, inc.ID, aid); err != nil {
+				return err
+			}
+		}
+		for _, vid := range input.VulnerabilityIds {
+			if err := r.IncidentRepo.LinkVulnerability(ctx, tx, inc.ID, vid); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 	return inc, err
 }
-func (r *Resolver) UpdateIncident(ctx context.Context, id string, input UpdateIncidentInput) (*model.Incident, error) {
+
+// UpdateIncident is the resolver for the updateIncident field.
+func (r *mutationResolver) UpdateIncident(ctx context.Context, id string, input model1.UpdateIncidentInput) (*model.Incident, error) {
 	var inc *model.Incident
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
@@ -190,6 +147,9 @@ func (r *Resolver) UpdateIncident(ctx context.Context, id string, input UpdateIn
 		if input.Classification != nil {
 			inc.Classification = input.Classification
 		}
+		if input.RegulatoryBreach != nil {
+			inc.RegulatoryBreach = *input.RegulatoryBreach
+		}
 		if input.Status != nil {
 			inc.Status = *input.Status
 		}
@@ -199,35 +159,55 @@ func (r *Resolver) UpdateIncident(ctx context.Context, id string, input UpdateIn
 		if input.RootCauseCategory != nil {
 			inc.RootCauseCategory = *input.RootCauseCategory
 		}
+		if input.CorrectiveActions != nil {
+			inc.CorrectiveActions = *input.CorrectiveActions
+		}
+		if input.PreventiveActions != nil {
+			inc.PreventiveActions = *input.PreventiveActions
+		}
 		if input.OwnerID != nil {
 			inc.OwnerID = input.OwnerID
+		}
+		if input.ContainedAt != nil {
+			inc.ContainedAt = input.ContainedAt
+		}
+		if input.ResolvedAt != nil {
+			inc.ResolvedAt = input.ResolvedAt
+		}
+		if input.ClosedAt != nil {
+			inc.ClosedAt = input.ClosedAt
 		}
 		return r.IncidentRepo.Update(ctx, tx, inc)
 	})
 	return inc, err
 }
-func (r *Resolver) DeleteIncident(ctx context.Context, id string) (bool, error) {
+
+// DeleteIncident is the resolver for the deleteIncident field.
+func (r *mutationResolver) DeleteIncident(ctx context.Context, id string) (bool, error) {
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.IncidentRepo.Delete(ctx, tx, id)
 	})
 	return err == nil, err
 }
-func (r *Resolver) CreateIncidentAction(ctx context.Context, incidentID string, input CreateActionInput) (*model.IncidentAction, error) {
+
+// AddIncidentAction is the resolver for the addIncidentAction field.
+func (r *mutationResolver) AddIncidentAction(ctx context.Context, incidentID string, input model1.AddIncidentActionInput) (*model.IncidentAction, error) {
 	a := &model.IncidentAction{
 		IncidentID:  incidentID,
 		ActionType:  input.ActionType,
 		Description: input.Description,
 		OwnerID:     input.OwnerID,
+		DueDate:     input.DueDate,
 		Status:      "open",
 	}
-
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.IncidentRepo.CreateAction(ctx, tx, a)
 	})
 	return a, err
 }
-func (r *Resolver) UpdateIncidentAction(ctx context.Context, id string, input UpdateActionInput) (*model.IncidentAction, error) {
-	// For simplicity, load directly
+
+// UpdateIncidentAction is the resolver for the updateIncidentAction field.
+func (r *mutationResolver) UpdateIncidentAction(ctx context.Context, id string, input model1.UpdateIncidentActionInput) (*model.IncidentAction, error) {
 	a := &model.IncidentAction{ID: id}
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		if input.Description != nil {
@@ -236,6 +216,9 @@ func (r *Resolver) UpdateIncidentAction(ctx context.Context, id string, input Up
 		if input.OwnerID != nil {
 			a.OwnerID = input.OwnerID
 		}
+		if input.DueDate != nil {
+			a.DueDate = input.DueDate
+		}
 		if input.Status != nil {
 			a.Status = *input.Status
 		}
@@ -243,57 +226,55 @@ func (r *Resolver) UpdateIncidentAction(ctx context.Context, id string, input Up
 	})
 	return a, err
 }
-func (r *Resolver) IncidentActions(ctx context.Context, inc *model.Incident) ([]*model.IncidentAction, error) {
-	var actions []*model.IncidentAction
+
+// Incidents is the resolver for the incidents field.
+func (r *queryResolver) Incidents(ctx context.Context, first *int, after *string, filter *model1.IncidentFilter) (*model1.IncidentConnection, error) {
+	params := paginationParams(first, after)
+	var repoFilter *repository.IncidentFilter
+	if filter != nil {
+		repoFilter = &repository.IncidentFilter{
+			Status:       filter.Status,
+			ImpactRating: filter.ImpactRating,
+			OwnerID:      filter.OwnerID,
+			Search:       filter.Search,
+		}
+	}
+
+	var incidents []*model.Incident
+	var pr repository.PaginationResult
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		actions, err = r.IncidentRepo.ListActions(ctx, tx, inc.ID)
+		incidents, pr, err = r.IncidentRepo.List(ctx, tx, params, repoFilter)
 		return err
 	})
-	return actions, err
-}
-func (r *Resolver) IncidentOwner(ctx context.Context, inc *model.Incident) (*model.User, error) {
-	if inc.OwnerID == nil {
-		return nil, nil
+	if err != nil {
+		return nil, err
 	}
-	return r.resolveUser(ctx, *inc.OwnerID)
-}
-func (r *Resolver) IncidentReporter(ctx context.Context, inc *model.Incident) (*model.User, error) {
-	if inc.ReporterID == nil {
-		return nil, nil
+
+	edges := make([]*model1.IncidentEdge, len(incidents))
+	for i, inc := range incidents {
+		edges[i] = &model1.IncidentEdge{Cursor: repository.EncodeCursor(i), Node: inc}
 	}
-	return r.resolveUser(ctx, *inc.ReporterID)
+	return &model1.IncidentConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
 }
 
-type CreateIncidentInput struct {
-	Name             string   `json:"name"`
-	Area             *string  `json:"area"`
-	Description      *string  `json:"description"`
-	ImpactSummary    *string  `json:"impactSummary"`
-	ImpactRating     *string  `json:"impactRating"`
-	Classification   []string `json:"classification"`
-	RegulatoryBreach *bool    `json:"regulatoryBreach"`
-	OwnerID          *string  `json:"ownerId"`
+// Incident is the resolver for the incident field.
+func (r *queryResolver) Incident(ctx context.Context, id string) (*model.Incident, error) {
+	var inc *model.Incident
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		inc, err = r.IncidentRepo.GetByID(ctx, tx, id)
+		return err
+	})
+	return inc, err
 }
-type UpdateIncidentInput struct {
-	Name              *string  `json:"name"`
-	Area              *string  `json:"area"`
-	Description       *string  `json:"description"`
-	ImpactSummary     *string  `json:"impactSummary"`
-	ImpactRating      *string  `json:"impactRating"`
-	Classification    []string `json:"classification"`
-	Status            *string  `json:"status"`
-	RootCause         *string  `json:"rootCause"`
-	RootCauseCategory *string  `json:"rootCauseCategory"`
-	OwnerID           *string  `json:"ownerId"`
-}
-type CreateActionInput struct {
-	ActionType  string  `json:"actionType"`
-	Description string  `json:"description"`
-	OwnerID     *string `json:"ownerId"`
-}
-type UpdateActionInput struct {
-	Description *string `json:"description"`
-	OwnerID     *string `json:"ownerId"`
-	Status      *string `json:"status"`
-}
+
+// Incident returns IncidentResolver implementation.
+func (r *Resolver) Incident() IncidentResolver { return &incidentResolver{r} }
+
+// IncidentAction returns IncidentActionResolver implementation.
+func (r *Resolver) IncidentAction() IncidentActionResolver { return &incidentActionResolver{r} }
+
+type incidentResolver struct{ *Resolver }
+type incidentActionResolver struct{ *Resolver }

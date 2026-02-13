@@ -17,120 +17,50 @@ import (
 
 // Owner is the resolver for the owner field.
 func (r *drPlanResolver) Owner(ctx context.Context, obj *model.DrPlan) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Owner - owner"))
+	if obj.OwnerID == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.OwnerID)
 }
 
 // Assets is the resolver for the assets field.
 func (r *drPlanResolver) Assets(ctx context.Context, obj *model.DrPlan, first *int, after *string) (*model1.AssetConnection, error) {
-	panic(fmt.Errorf("not implemented: Assets - assets"))
+	return &model1.AssetConnection{Edges: []*model1.AssetEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
 }
 
 // Tests is the resolver for the tests field.
 func (r *drPlanResolver) Tests(ctx context.Context, obj *model.DrPlan) ([]*model.DrTest, error) {
-	panic(fmt.Errorf("not implemented: Tests - tests"))
+	var tests []*model.DrTest
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		tests, err = r.DrPlanRepo.ListTests(ctx, tx, obj.ID)
+		return err
+	})
+	return tests, err
 }
 
 // Comments is the resolver for the comments field.
 func (r *drPlanResolver) Comments(ctx context.Context, obj *model.DrPlan, first *int, after *string) (*model1.CommentConnection, error) {
-	panic(fmt.Errorf("not implemented: Comments - comments"))
+	return r.entityComments(ctx, "dr_plan", obj.ID, first, after)
 }
 
 // Evidence is the resolver for the evidence field.
 func (r *drPlanResolver) Evidence(ctx context.Context, obj *model.DrPlan, first *int, after *string) (*model1.EvidenceConnection, error) {
-	panic(fmt.Errorf("not implemented: Evidence - evidence"))
+	return r.entityEvidence(ctx, "dr_plan", obj.ID, first, after)
 }
 
 // Comments is the resolver for the comments field.
 func (r *drTestResolver) Comments(ctx context.Context, obj *model.DrTest, first *int, after *string) (*model1.CommentConnection, error) {
-	panic(fmt.Errorf("not implemented: Comments - comments"))
+	return r.entityComments(ctx, "dr_test", obj.ID, first, after)
 }
 
 // Evidence is the resolver for the evidence field.
 func (r *drTestResolver) Evidence(ctx context.Context, obj *model.DrTest, first *int, after *string) (*model1.EvidenceConnection, error) {
-	panic(fmt.Errorf("not implemented: Evidence - evidence"))
+	return r.entityEvidence(ctx, "dr_test", obj.ID, first, after)
 }
 
 // CreateDrPlan is the resolver for the createDrPlan field.
 func (r *mutationResolver) CreateDrPlan(ctx context.Context, input model1.CreateDrPlanInput) (*model.DrPlan, error) {
-	panic(fmt.Errorf("not implemented: CreateDrPlan - createDrPlan"))
-}
-
-// UpdateDrPlan is the resolver for the updateDrPlan field.
-func (r *mutationResolver) UpdateDrPlan(ctx context.Context, id string, input model1.UpdateDrPlanInput) (*model.DrPlan, error) {
-	panic(fmt.Errorf("not implemented: UpdateDrPlan - updateDrPlan"))
-}
-
-// DeleteDrPlan is the resolver for the deleteDrPlan field.
-func (r *mutationResolver) DeleteDrPlan(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteDrPlan - deleteDrPlan"))
-}
-
-// RecordDrTest is the resolver for the recordDrTest field.
-func (r *mutationResolver) RecordDrTest(ctx context.Context, planID string, input model1.RecordDrTestInput) (*model.DrTest, error) {
-	panic(fmt.Errorf("not implemented: RecordDrTest - recordDrTest"))
-}
-
-// UpdateDrTest is the resolver for the updateDrTest field.
-func (r *mutationResolver) UpdateDrTest(ctx context.Context, id string, input model1.UpdateDrTestInput) (*model.DrTest, error) {
-	panic(fmt.Errorf("not implemented: UpdateDrTest - updateDrTest"))
-}
-
-// DrPlans is the resolver for the drPlans field.
-func (r *queryResolver) DrPlans(ctx context.Context, first *int, after *string, filter *model1.DrPlanFilter) (*model1.DrPlanConnection, error) {
-	panic(fmt.Errorf("not implemented: DrPlans - drPlans"))
-}
-
-// DrPlan is the resolver for the drPlan field.
-func (r *queryResolver) DrPlan(ctx context.Context, id string) (*model.DrPlan, error) {
-	panic(fmt.Errorf("not implemented: DrPlan - drPlan"))
-}
-
-// DrPlan returns DrPlanResolver implementation.
-func (r *Resolver) DrPlan() DrPlanResolver { return &drPlanResolver{r} }
-
-// DrTest returns DrTestResolver implementation.
-func (r *Resolver) DrTest() DrTestResolver { return &drTestResolver{r} }
-
-type drPlanResolver struct{ *Resolver }
-type drTestResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-type DrPlanConnection struct {
-	Edges      []*DrPlanEdge `json:"edges"`
-	PageInfo   *PageInfo     `json:"pageInfo"`
-	TotalCount int           `json:"totalCount"`
-}
-type DrPlanEdge struct {
-	Cursor string        `json:"cursor"`
-	Node   *model.DrPlan `json:"node"`
-}
-
-func (r *Resolver) DrPlans(ctx context.Context, first *int, after *string, filter *repository.DrPlanFilter) (*DrPlanConnection, error) {
-	params := paginationParams(first, after)
-	var plans []*model.DrPlan
-	var pr repository.PaginationResult
-
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		plans, pr, err = r.DrPlanRepo.List(ctx, tx, params, filter)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]*DrPlanEdge, len(plans))
-	for i, p := range plans {
-		edges[i] = &DrPlanEdge{Cursor: repository.EncodeCursor(i), Node: p}
-	}
-	return &DrPlanConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
-}
-func (r *Resolver) CreateDrPlan(ctx context.Context, input CreateDrPlanInput) (*model.DrPlan, error) {
 	orgID, ok := auth.OrgIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
@@ -142,18 +72,28 @@ func (r *Resolver) CreateDrPlan(ctx context.Context, input CreateDrPlanInput) (*
 		Scope:      derefStr(input.Scope),
 		OwnerID:    input.OwnerID,
 		Version:    derefStr(input.Version),
-		RTOMinutes: input.RTOMinutes,
-		RPOMinutes: input.RPOMinutes,
+		RTOMinutes: input.RtoMinutes,
+		RPOMinutes: input.RpoMinutes,
 		Playbook:   derefStr(input.Playbook),
 		Status:     "draft",
 	}
 
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		return r.DrPlanRepo.Create(ctx, tx, p)
+		if err := r.DrPlanRepo.Create(ctx, tx, p); err != nil {
+			return err
+		}
+		for _, aid := range input.AssetIds {
+			if err := r.DrPlanRepo.LinkAsset(ctx, tx, p.ID, aid); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 	return p, err
 }
-func (r *Resolver) UpdateDrPlan(ctx context.Context, id string, input UpdateDrPlanInput) (*model.DrPlan, error) {
+
+// UpdateDrPlan is the resolver for the updateDrPlan field.
+func (r *mutationResolver) UpdateDrPlan(ctx context.Context, id string, input model1.UpdateDrPlanInput) (*model.DrPlan, error) {
 	var p *model.DrPlan
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
@@ -173,11 +113,11 @@ func (r *Resolver) UpdateDrPlan(ctx context.Context, id string, input UpdateDrPl
 		if input.Version != nil {
 			p.Version = *input.Version
 		}
-		if input.RTOMinutes != nil {
-			p.RTOMinutes = input.RTOMinutes
+		if input.RtoMinutes != nil {
+			p.RTOMinutes = input.RtoMinutes
 		}
-		if input.RPOMinutes != nil {
-			p.RPOMinutes = input.RPOMinutes
+		if input.RpoMinutes != nil {
+			p.RPOMinutes = input.RpoMinutes
 		}
 		if input.Playbook != nil {
 			p.Playbook = *input.Playbook
@@ -189,16 +129,22 @@ func (r *Resolver) UpdateDrPlan(ctx context.Context, id string, input UpdateDrPl
 	})
 	return p, err
 }
-func (r *Resolver) DeleteDrPlan(ctx context.Context, id string) (bool, error) {
+
+// DeleteDrPlan is the resolver for the deleteDrPlan field.
+func (r *mutationResolver) DeleteDrPlan(ctx context.Context, id string) (bool, error) {
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.DrPlanRepo.Delete(ctx, tx, id)
 	})
 	return err == nil, err
 }
-func (r *Resolver) RecordDrTest(ctx context.Context, planID string, input CreateDrTestInput) (*model.DrTest, error) {
+
+// RecordDrTest is the resolver for the recordDrTest field.
+func (r *mutationResolver) RecordDrTest(ctx context.Context, planID string, input model1.RecordDrTestInput) (*model.DrTest, error) {
 	t := &model.DrTest{
 		DrPlanID:     planID,
 		TestType:     input.TestType,
+		PlannedDate:  input.PlannedDate,
+		ActualDate:   input.ActualDate,
 		Result:       derefStr(input.Result),
 		Observations: derefStr(input.Observations),
 	}
@@ -208,64 +154,71 @@ func (r *Resolver) RecordDrTest(ctx context.Context, planID string, input Create
 	})
 	return t, err
 }
-func (r *Resolver) UpdateDrTest(ctx context.Context, id string, input UpdateDrTestInput) (*model.DrTest, error) {
+
+// UpdateDrTest is the resolver for the updateDrTest field.
+func (r *mutationResolver) UpdateDrTest(ctx context.Context, id string, input model1.UpdateDrTestInput) (*model.DrTest, error) {
 	t := &model.DrTest{ID: id}
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		if input.ActualDate != nil {
+			t.ActualDate = input.ActualDate
+		}
 		if input.Result != nil {
 			t.Result = *input.Result
 		}
 		if input.Observations != nil {
 			t.Observations = *input.Observations
 		}
-		if input.TestType != nil {
-			t.TestType = *input.TestType
-		}
 		return r.DrPlanRepo.UpdateTest(ctx, tx, t)
 	})
 	return t, err
 }
-func (r *Resolver) DrPlanTests(ctx context.Context, plan *model.DrPlan) ([]*model.DrTest, error) {
-	var tests []*model.DrTest
+
+// DrPlans is the resolver for the drPlans field.
+func (r *queryResolver) DrPlans(ctx context.Context, first *int, after *string, filter *model1.DrPlanFilter) (*model1.DrPlanConnection, error) {
+	params := paginationParams(first, after)
+	var repoFilter *repository.DrPlanFilter
+	if filter != nil {
+		repoFilter = &repository.DrPlanFilter{
+			Status: filter.Status,
+			Search: filter.Search,
+		}
+	}
+
+	var plans []*model.DrPlan
+	var pr repository.PaginationResult
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		tests, err = r.DrPlanRepo.ListTests(ctx, tx, plan.ID)
+		plans, pr, err = r.DrPlanRepo.List(ctx, tx, params, repoFilter)
 		return err
 	})
-	return tests, err
-}
-func (r *Resolver) DrPlanOwner(ctx context.Context, plan *model.DrPlan) (*model.User, error) {
-	if plan.OwnerID == nil {
-		return nil, nil
+	if err != nil {
+		return nil, err
 	}
-	return r.resolveUser(ctx, *plan.OwnerID)
+
+	edges := make([]*model1.DrPlanEdge, len(plans))
+	for i, p := range plans {
+		edges[i] = &model1.DrPlanEdge{Cursor: repository.EncodeCursor(i), Node: p}
+	}
+	return &model1.DrPlanConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
 }
 
-type CreateDrPlanInput struct {
-	Name       string  `json:"name"`
-	Scope      *string `json:"scope"`
-	OwnerID    *string `json:"ownerId"`
-	Version    *string `json:"version"`
-	RTOMinutes *int    `json:"rtoMinutes"`
-	RPOMinutes *int    `json:"rpoMinutes"`
-	Playbook   *string `json:"playbook"`
+// DrPlan is the resolver for the drPlan field.
+func (r *queryResolver) DrPlan(ctx context.Context, id string) (*model.DrPlan, error) {
+	var p *model.DrPlan
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		p, err = r.DrPlanRepo.GetByID(ctx, tx, id)
+		return err
+	})
+	return p, err
 }
-type UpdateDrPlanInput struct {
-	Name       *string `json:"name"`
-	Scope      *string `json:"scope"`
-	OwnerID    *string `json:"ownerId"`
-	Version    *string `json:"version"`
-	RTOMinutes *int    `json:"rtoMinutes"`
-	RPOMinutes *int    `json:"rpoMinutes"`
-	Playbook   *string `json:"playbook"`
-	Status     *string `json:"status"`
-}
-type CreateDrTestInput struct {
-	TestType     string  `json:"testType"`
-	Result       *string `json:"result"`
-	Observations *string `json:"observations"`
-}
-type UpdateDrTestInput struct {
-	TestType     *string `json:"testType"`
-	Result       *string `json:"result"`
-	Observations *string `json:"observations"`
-}
+
+// DrPlan returns DrPlanResolver implementation.
+func (r *Resolver) DrPlan() DrPlanResolver { return &drPlanResolver{r} }
+
+// DrTest returns DrTestResolver implementation.
+func (r *Resolver) DrTest() DrTestResolver { return &drTestResolver{r} }
+
+type drPlanResolver struct{ *Resolver }
+type drTestResolver struct{ *Resolver }

@@ -6,8 +6,8 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"time"
 
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/jmcintyre/secbase/api/internal/auth"
@@ -18,169 +18,6 @@ import (
 
 // CreateRisk is the resolver for the createRisk field.
 func (r *mutationResolver) CreateRisk(ctx context.Context, input model1.CreateRiskInput) (*model.Risk, error) {
-	panic(fmt.Errorf("not implemented: CreateRisk - createRisk"))
-}
-
-// UpdateRisk is the resolver for the updateRisk field.
-func (r *mutationResolver) UpdateRisk(ctx context.Context, id string, input model1.UpdateRiskInput) (*model.Risk, error) {
-	panic(fmt.Errorf("not implemented: UpdateRisk - updateRisk"))
-}
-
-// DeleteRisk is the resolver for the deleteRisk field.
-func (r *mutationResolver) DeleteRisk(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteRisk - deleteRisk"))
-}
-
-// AddRiskTreatment is the resolver for the addRiskTreatment field.
-func (r *mutationResolver) AddRiskTreatment(ctx context.Context, riskID string, input model1.AddRiskTreatmentInput) (*model.RiskTreatment, error) {
-	panic(fmt.Errorf("not implemented: AddRiskTreatment - addRiskTreatment"))
-}
-
-// UpdateRiskTreatment is the resolver for the updateRiskTreatment field.
-func (r *mutationResolver) UpdateRiskTreatment(ctx context.Context, id string, input model1.UpdateRiskTreatmentInput) (*model.RiskTreatment, error) {
-	panic(fmt.Errorf("not implemented: UpdateRiskTreatment - updateRiskTreatment"))
-}
-
-// UpdateRiskMatrixConfig is the resolver for the updateRiskMatrixConfig field.
-func (r *mutationResolver) UpdateRiskMatrixConfig(ctx context.Context, input model1.UpdateRiskMatrixConfigInput) (*model.RiskMatrixConfig, error) {
-	panic(fmt.Errorf("not implemented: UpdateRiskMatrixConfig - updateRiskMatrixConfig"))
-}
-
-// Risks is the resolver for the risks field.
-func (r *queryResolver) Risks(ctx context.Context, first *int, after *string, filter *model1.RiskFilter) (*model1.RiskConnection, error) {
-	panic(fmt.Errorf("not implemented: Risks - risks"))
-}
-
-// Risk is the resolver for the risk field.
-func (r *queryResolver) Risk(ctx context.Context, id string) (*model.Risk, error) {
-	panic(fmt.Errorf("not implemented: Risk - risk"))
-}
-
-// RiskMatrixConfig is the resolver for the riskMatrixConfig field.
-func (r *queryResolver) RiskMatrixConfig(ctx context.Context) (*model.RiskMatrixConfig, error) {
-	panic(fmt.Errorf("not implemented: RiskMatrixConfig - riskMatrixConfig"))
-}
-
-// CalculatedInherentLevel is the resolver for the calculatedInherentLevel field.
-func (r *riskResolver) CalculatedInherentLevel(ctx context.Context, obj *model.Risk) (*string, error) {
-	panic(fmt.Errorf("not implemented: CalculatedInherentLevel - calculatedInherentLevel"))
-}
-
-// CalculatedResidualLevel is the resolver for the calculatedResidualLevel field.
-func (r *riskResolver) CalculatedResidualLevel(ctx context.Context, obj *model.Risk) (*string, error) {
-	panic(fmt.Errorf("not implemented: CalculatedResidualLevel - calculatedResidualLevel"))
-}
-
-// Owner is the resolver for the owner field.
-func (r *riskResolver) Owner(ctx context.Context, obj *model.Risk) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Owner - owner"))
-}
-
-// Approver is the resolver for the approver field.
-func (r *riskResolver) Approver(ctx context.Context, obj *model.Risk) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Approver - approver"))
-}
-
-// LastReviewedBy is the resolver for the lastReviewedBy field.
-func (r *riskResolver) LastReviewedBy(ctx context.Context, obj *model.Risk) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: LastReviewedBy - lastReviewedBy"))
-}
-
-// Assets is the resolver for the assets field.
-func (r *riskResolver) Assets(ctx context.Context, obj *model.Risk, first *int, after *string) (*model1.AssetConnection, error) {
-	panic(fmt.Errorf("not implemented: Assets - assets"))
-}
-
-// Treatments is the resolver for the treatments field.
-func (r *riskResolver) Treatments(ctx context.Context, obj *model.Risk) ([]*model.RiskTreatment, error) {
-	panic(fmt.Errorf("not implemented: Treatments - treatments"))
-}
-
-// Controls is the resolver for the controls field.
-func (r *riskResolver) Controls(ctx context.Context, obj *model.Risk) ([]*model.OrgIsoControl, error) {
-	panic(fmt.Errorf("not implemented: Controls - controls"))
-}
-
-// Comments is the resolver for the comments field.
-func (r *riskResolver) Comments(ctx context.Context, obj *model.Risk, first *int, after *string) (*model1.CommentConnection, error) {
-	panic(fmt.Errorf("not implemented: Comments - comments"))
-}
-
-// Evidence is the resolver for the evidence field.
-func (r *riskResolver) Evidence(ctx context.Context, obj *model.Risk, first *int, after *string) (*model1.EvidenceConnection, error) {
-	panic(fmt.Errorf("not implemented: Evidence - evidence"))
-}
-
-// LikelihoodLabels is the resolver for the likelihoodLabels field.
-func (r *riskMatrixConfigResolver) LikelihoodLabels(ctx context.Context, obj *model.RiskMatrixConfig) ([]string, error) {
-	panic(fmt.Errorf("not implemented: LikelihoodLabels - likelihoodLabels"))
-}
-
-// ImpactLabels is the resolver for the impactLabels field.
-func (r *riskMatrixConfigResolver) ImpactLabels(ctx context.Context, obj *model.RiskMatrixConfig) ([]string, error) {
-	panic(fmt.Errorf("not implemented: ImpactLabels - impactLabels"))
-}
-
-// LevelThresholds is the resolver for the levelThresholds field.
-func (r *riskMatrixConfigResolver) LevelThresholds(ctx context.Context, obj *model.RiskMatrixConfig) (string, error) {
-	panic(fmt.Errorf("not implemented: LevelThresholds - levelThresholds"))
-}
-
-// Responsible is the resolver for the responsible field.
-func (r *riskTreatmentResolver) Responsible(ctx context.Context, obj *model.RiskTreatment) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Responsible - responsible"))
-}
-
-// Risk returns RiskResolver implementation.
-func (r *Resolver) Risk() RiskResolver { return &riskResolver{r} }
-
-// RiskMatrixConfig returns RiskMatrixConfigResolver implementation.
-func (r *Resolver) RiskMatrixConfig() RiskMatrixConfigResolver { return &riskMatrixConfigResolver{r} }
-
-// RiskTreatment returns RiskTreatmentResolver implementation.
-func (r *Resolver) RiskTreatment() RiskTreatmentResolver { return &riskTreatmentResolver{r} }
-
-type riskResolver struct{ *Resolver }
-type riskMatrixConfigResolver struct{ *Resolver }
-type riskTreatmentResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-type RiskConnection struct {
-	Edges      []*RiskEdge `json:"edges"`
-	PageInfo   *PageInfo   `json:"pageInfo"`
-	TotalCount int         `json:"totalCount"`
-}
-type RiskEdge struct {
-	Cursor string      `json:"cursor"`
-	Node   *model.Risk `json:"node"`
-}
-
-func (r *Resolver) Risks(ctx context.Context, first *int, after *string, filter *repository.RiskFilter) (*RiskConnection, error) {
-	params := paginationParams(first, after)
-	var risks []*model.Risk
-	var pr repository.PaginationResult
-
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		risks, pr, err = r.RiskRepo.List(ctx, tx, params, filter)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]*RiskEdge, len(risks))
-	for i, risk := range risks {
-		edges[i] = &RiskEdge{Cursor: repository.EncodeCursor(i), Node: risk}
-	}
-	return &RiskConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
-}
-func (r *Resolver) CreateRisk(ctx context.Context, input CreateRiskInput) (*model.Risk, error) {
 	orgID, ok := auth.OrgIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
@@ -199,14 +36,31 @@ func (r *Resolver) CreateRisk(ctx context.Context, input CreateRiskInput) (*mode
 		ResidualImpact:     derefInt(input.ResidualImpact),
 		Status:             "identified",
 		OwnerID:            input.OwnerID,
+		ApproverID:         input.ApproverID,
+		ReviewDate:         input.ReviewDate,
 	}
 
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		return r.RiskRepo.Create(ctx, tx, risk)
+		if err := r.RiskRepo.Create(ctx, tx, risk); err != nil {
+			return err
+		}
+		for _, aid := range input.AssetIds {
+			if err := r.RiskRepo.LinkAsset(ctx, tx, risk.ID, aid); err != nil {
+				return err
+			}
+		}
+		for _, cid := range input.ControlIds {
+			if err := r.RiskRepo.LinkControl(ctx, tx, risk.ID, cid); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 	return risk, err
 }
-func (r *Resolver) UpdateRisk(ctx context.Context, id string, input UpdateRiskInput) (*model.Risk, error) {
+
+// UpdateRisk is the resolver for the updateRisk field.
+func (r *mutationResolver) UpdateRisk(ctx context.Context, id string, input model1.UpdateRiskInput) (*model.Risk, error) {
 	var risk *model.Risk
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
@@ -226,6 +80,9 @@ func (r *Resolver) UpdateRisk(ctx context.Context, id string, input UpdateRiskIn
 		if input.Category != nil {
 			risk.Category = *input.Category
 		}
+		if input.Source != nil {
+			risk.Source = *input.Source
+		}
 		if input.InherentLikelihood != nil {
 			risk.InherentLikelihood = *input.InherentLikelihood
 		}
@@ -244,17 +101,27 @@ func (r *Resolver) UpdateRisk(ctx context.Context, id string, input UpdateRiskIn
 		if input.OwnerID != nil {
 			risk.OwnerID = input.OwnerID
 		}
+		if input.ApproverID != nil {
+			risk.ApproverID = input.ApproverID
+		}
+		if input.ReviewDate != nil {
+			risk.ReviewDate = input.ReviewDate
+		}
 		return r.RiskRepo.Update(ctx, tx, risk)
 	})
 	return risk, err
 }
-func (r *Resolver) DeleteRisk(ctx context.Context, id string) (bool, error) {
+
+// DeleteRisk is the resolver for the deleteRisk field.
+func (r *mutationResolver) DeleteRisk(ctx context.Context, id string) (bool, error) {
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.RiskRepo.Delete(ctx, tx, id)
 	})
 	return err == nil, err
 }
-func (r *Resolver) CreateRiskTreatment(ctx context.Context, riskID string, input CreateTreatmentInput) (*model.RiskTreatment, error) {
+
+// AddRiskTreatment is the resolver for the addRiskTreatment field.
+func (r *mutationResolver) AddRiskTreatment(ctx context.Context, riskID string, input model1.AddRiskTreatmentInput) (*model.RiskTreatment, error) {
 	t := &model.RiskTreatment{
 		RiskID:        riskID,
 		Action:        input.Action,
@@ -267,7 +134,9 @@ func (r *Resolver) CreateRiskTreatment(ctx context.Context, riskID string, input
 	})
 	return t, err
 }
-func (r *Resolver) UpdateRiskTreatment(ctx context.Context, id string, input UpdateTreatmentInput) (*model.RiskTreatment, error) {
+
+// UpdateRiskTreatment is the resolver for the updateRiskTreatment field.
+func (r *mutationResolver) UpdateRiskTreatment(ctx context.Context, id string, input model1.UpdateRiskTreatmentInput) (*model.RiskTreatment, error) {
 	var t *model.RiskTreatment
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
@@ -291,76 +160,192 @@ func (r *Resolver) UpdateRiskTreatment(ctx context.Context, id string, input Upd
 	})
 	return t, err
 }
-func (r *Resolver) RiskTreatments(ctx context.Context, risk *model.Risk) ([]*model.RiskTreatment, error) {
+
+// UpdateRiskMatrixConfig is the resolver for the updateRiskMatrixConfig field.
+func (r *mutationResolver) UpdateRiskMatrixConfig(ctx context.Context, input model1.UpdateRiskMatrixConfigInput) (*model.RiskMatrixConfig, error) {
+	orgID, ok := auth.OrgIDFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("authentication required")
+	}
+
+	likelihoodJSON, err := json.Marshal(input.LikelihoodLabels)
+	if err != nil {
+		return nil, fmt.Errorf("marshal likelihood labels: %w", err)
+	}
+	impactJSON, err := json.Marshal(input.ImpactLabels)
+	if err != nil {
+		return nil, fmt.Errorf("marshal impact labels: %w", err)
+	}
+
+	config := &model.RiskMatrixConfig{
+		OrgID:            orgID,
+		LikelihoodLabels: likelihoodJSON,
+		ImpactLabels:     impactJSON,
+		LevelThresholds:  json.RawMessage(input.LevelThresholds),
+	}
+
+	err = r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		return r.RiskRepo.UpdateMatrixConfig(ctx, tx, config)
+	})
+	return config, err
+}
+
+// Risks is the resolver for the risks field.
+func (r *queryResolver) Risks(ctx context.Context, first *int, after *string, filter *model1.RiskFilter) (*model1.RiskConnection, error) {
+	params := paginationParams(first, after)
+	var repoFilter *repository.RiskFilter
+	if filter != nil {
+		repoFilter = &repository.RiskFilter{
+			Status:   filter.Status,
+			Category: filter.Category,
+			OwnerID:  filter.OwnerID,
+			Search:   filter.Search,
+		}
+	}
+
+	var risks []*model.Risk
+	var pr repository.PaginationResult
+
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		risks, pr, err = r.RiskRepo.List(ctx, tx, params, repoFilter)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	edges := make([]*model1.RiskEdge, len(risks))
+	for i, risk := range risks {
+		edges[i] = &model1.RiskEdge{Cursor: repository.EncodeCursor(i), Node: risk}
+	}
+	return &model1.RiskConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
+}
+
+// Risk is the resolver for the risk field.
+func (r *queryResolver) Risk(ctx context.Context, id string) (*model.Risk, error) {
+	var risk *model.Risk
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		risk, err = r.RiskRepo.GetByID(ctx, tx, id)
+		return err
+	})
+	return risk, err
+}
+
+// RiskMatrixConfig is the resolver for the riskMatrixConfig field.
+func (r *queryResolver) RiskMatrixConfig(ctx context.Context) (*model.RiskMatrixConfig, error) {
+	var config *model.RiskMatrixConfig
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		config, err = r.RiskRepo.GetMatrixConfig(ctx, tx)
+		return err
+	})
+	return config, err
+}
+
+// CalculatedInherentLevel is the resolver for the calculatedInherentLevel field.
+func (r *riskResolver) CalculatedInherentLevel(ctx context.Context, obj *model.Risk) (*string, error) {
+	level := fmt.Sprintf("%d", obj.InherentLikelihood*obj.InherentImpact)
+	return &level, nil
+}
+
+// CalculatedResidualLevel is the resolver for the calculatedResidualLevel field.
+func (r *riskResolver) CalculatedResidualLevel(ctx context.Context, obj *model.Risk) (*string, error) {
+	level := fmt.Sprintf("%d", obj.ResidualLikelihood*obj.ResidualImpact)
+	return &level, nil
+}
+
+// Owner is the resolver for the owner field.
+func (r *riskResolver) Owner(ctx context.Context, obj *model.Risk) (*model.User, error) {
+	if obj.OwnerID == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.OwnerID)
+}
+
+// Approver is the resolver for the approver field.
+func (r *riskResolver) Approver(ctx context.Context, obj *model.Risk) (*model.User, error) {
+	if obj.ApproverID == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.ApproverID)
+}
+
+// LastReviewedBy is the resolver for the lastReviewedBy field.
+func (r *riskResolver) LastReviewedBy(ctx context.Context, obj *model.Risk) (*model.User, error) {
+	if obj.LastReviewedBy == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.LastReviewedBy)
+}
+
+// Assets is the resolver for the assets field.
+func (r *riskResolver) Assets(ctx context.Context, obj *model.Risk, first *int, after *string) (*model1.AssetConnection, error) {
+	return &model1.AssetConnection{Edges: []*model1.AssetEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
+}
+
+// Treatments is the resolver for the treatments field.
+func (r *riskResolver) Treatments(ctx context.Context, obj *model.Risk) ([]*model.RiskTreatment, error) {
 	var treatments []*model.RiskTreatment
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		treatments, err = r.RiskRepo.ListTreatments(ctx, tx, risk.ID)
+		treatments, err = r.RiskRepo.ListTreatments(ctx, tx, obj.ID)
 		return err
 	})
 	return treatments, err
 }
-func (r *Resolver) RiskHeatmap(ctx context.Context) ([]repository.HeatmapCell, error) {
-	var cells []repository.HeatmapCell
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		cells, err = r.RiskRepo.GetHeatmapData(ctx, tx)
-		return err
-	})
-	return cells, err
-}
-func (r *Resolver) RiskOwner(ctx context.Context, risk *model.Risk) (*model.User, error) {
-	if risk.OwnerID == nil {
-		return nil, nil
-	}
-	return r.resolveUser(ctx, *risk.OwnerID)
-}
-func (r *Resolver) RiskInherentLevel(risk *model.Risk) int {
-	return risk.InherentLikelihood * risk.InherentImpact
-}
-func (r *Resolver) RiskResidualLevel(risk *model.Risk) int {
-	return risk.ResidualLikelihood * risk.ResidualImpact
-}
-func derefInt(p *int) int {
-	if p == nil {
-		return 0
-	}
-	return *p
+
+// Controls is the resolver for the controls field.
+func (r *riskResolver) Controls(ctx context.Context, obj *model.Risk) ([]*model.OrgIsoControl, error) {
+	return []*model.OrgIsoControl{}, nil
 }
 
-type CreateRiskInput struct {
-	Title              string  `json:"title"`
-	Description        *string `json:"description"`
-	Scenario           *string `json:"scenario"`
-	Category           *string `json:"category"`
-	Source             *string `json:"source"`
-	InherentLikelihood *int    `json:"inherentLikelihood"`
-	InherentImpact     *int    `json:"inherentImpact"`
-	ResidualLikelihood *int    `json:"residualLikelihood"`
-	ResidualImpact     *int    `json:"residualImpact"`
-	OwnerID            *string `json:"ownerId"`
+// Comments is the resolver for the comments field.
+func (r *riskResolver) Comments(ctx context.Context, obj *model.Risk, first *int, after *string) (*model1.CommentConnection, error) {
+	return r.entityComments(ctx, "risk", obj.ID, first, after)
 }
-type UpdateRiskInput struct {
-	Title              *string `json:"title"`
-	Description        *string `json:"description"`
-	Scenario           *string `json:"scenario"`
-	Category           *string `json:"category"`
-	InherentLikelihood *int    `json:"inherentLikelihood"`
-	InherentImpact     *int    `json:"inherentImpact"`
-	ResidualLikelihood *int    `json:"residualLikelihood"`
-	ResidualImpact     *int    `json:"residualImpact"`
-	Status             *string `json:"status"`
-	OwnerID            *string `json:"ownerId"`
+
+// Evidence is the resolver for the evidence field.
+func (r *riskResolver) Evidence(ctx context.Context, obj *model.Risk, first *int, after *string) (*model1.EvidenceConnection, error) {
+	return r.entityEvidence(ctx, "risk", obj.ID, first, after)
 }
-type CreateTreatmentInput struct {
-	Action        string     `json:"action"`
-	ResponsibleID *string    `json:"responsibleId"`
-	Deadline      *time.Time `json:"deadline"`
-	Status        *string    `json:"status"`
+
+// LikelihoodLabels is the resolver for the likelihoodLabels field.
+func (r *riskMatrixConfigResolver) LikelihoodLabels(ctx context.Context, obj *model.RiskMatrixConfig) ([]string, error) {
+	return jsonToStrings(obj.LikelihoodLabels)
 }
-type UpdateTreatmentInput struct {
-	Action        *string    `json:"action"`
-	ResponsibleID *string    `json:"responsibleId"`
-	Deadline      *time.Time `json:"deadline"`
-	Status        *string    `json:"status"`
+
+// ImpactLabels is the resolver for the impactLabels field.
+func (r *riskMatrixConfigResolver) ImpactLabels(ctx context.Context, obj *model.RiskMatrixConfig) ([]string, error) {
+	return jsonToStrings(obj.ImpactLabels)
 }
+
+// LevelThresholds is the resolver for the levelThresholds field.
+func (r *riskMatrixConfigResolver) LevelThresholds(ctx context.Context, obj *model.RiskMatrixConfig) (string, error) {
+	if obj.LevelThresholds == nil {
+		return "{}", nil
+	}
+	return string(obj.LevelThresholds), nil
+}
+
+// Responsible is the resolver for the responsible field.
+func (r *riskTreatmentResolver) Responsible(ctx context.Context, obj *model.RiskTreatment) (*model.User, error) {
+	if obj.ResponsibleID == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.ResponsibleID)
+}
+
+// Risk returns RiskResolver implementation.
+func (r *Resolver) Risk() RiskResolver { return &riskResolver{r} }
+
+// RiskMatrixConfig returns RiskMatrixConfigResolver implementation.
+func (r *Resolver) RiskMatrixConfig() RiskMatrixConfigResolver { return &riskMatrixConfigResolver{r} }
+
+// RiskTreatment returns RiskTreatmentResolver implementation.
+func (r *Resolver) RiskTreatment() RiskTreatmentResolver { return &riskTreatmentResolver{r} }
+
+type riskResolver struct{ *Resolver }
+type riskMatrixConfigResolver struct{ *Resolver }
+type riskTreatmentResolver struct{ *Resolver }

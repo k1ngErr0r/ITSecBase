@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	pgx "github.com/jackc/pgx/v5"
 	model1 "github.com/jmcintyre/secbase/api/internal/graph/model"
@@ -16,124 +15,17 @@ import (
 
 // UpdateOrgIsoControl is the resolver for the updateOrgIsoControl field.
 func (r *mutationResolver) UpdateOrgIsoControl(ctx context.Context, id string, input model1.UpdateOrgIsoControlInput) (*model.OrgIsoControl, error) {
-	panic(fmt.Errorf("not implemented: UpdateOrgIsoControl - updateOrgIsoControl"))
-}
-
-// Control is the resolver for the control field.
-func (r *orgIsoControlResolver) Control(ctx context.Context, obj *model.OrgIsoControl) (*model.IsoControl, error) {
-	panic(fmt.Errorf("not implemented: Control - control"))
-}
-
-// ResponsibleOwner is the resolver for the responsibleOwner field.
-func (r *orgIsoControlResolver) ResponsibleOwner(ctx context.Context, obj *model.OrgIsoControl) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: ResponsibleOwner - responsibleOwner"))
-}
-
-// Assets is the resolver for the assets field.
-func (r *orgIsoControlResolver) Assets(ctx context.Context, obj *model.OrgIsoControl, first *int, after *string) (*model1.AssetConnection, error) {
-	panic(fmt.Errorf("not implemented: Assets - assets"))
-}
-
-// Risks is the resolver for the risks field.
-func (r *orgIsoControlResolver) Risks(ctx context.Context, obj *model.OrgIsoControl, first *int, after *string) (*model1.RiskConnection, error) {
-	panic(fmt.Errorf("not implemented: Risks - risks"))
-}
-
-// Comments is the resolver for the comments field.
-func (r *orgIsoControlResolver) Comments(ctx context.Context, obj *model.OrgIsoControl, first *int, after *string) (*model1.CommentConnection, error) {
-	panic(fmt.Errorf("not implemented: Comments - comments"))
-}
-
-// Evidence is the resolver for the evidence field.
-func (r *orgIsoControlResolver) Evidence(ctx context.Context, obj *model.OrgIsoControl, first *int, after *string) (*model1.EvidenceConnection, error) {
-	panic(fmt.Errorf("not implemented: Evidence - evidence"))
-}
-
-// IsoControls is the resolver for the isoControls field.
-func (r *queryResolver) IsoControls(ctx context.Context, theme *string) ([]*model.IsoControl, error) {
-	panic(fmt.Errorf("not implemented: IsoControls - isoControls"))
-}
-
-// OrgIsoControls is the resolver for the orgIsoControls field.
-func (r *queryResolver) OrgIsoControls(ctx context.Context, first *int, after *string, filter *model1.OrgIsoControlFilter) (*model1.OrgIsoControlConnection, error) {
-	panic(fmt.Errorf("not implemented: OrgIsoControls - orgIsoControls"))
-}
-
-// OrgIsoControl is the resolver for the orgIsoControl field.
-func (r *queryResolver) OrgIsoControl(ctx context.Context, id string) (*model.OrgIsoControl, error) {
-	panic(fmt.Errorf("not implemented: OrgIsoControl - orgIsoControl"))
-}
-
-// OrgIsoControl returns OrgIsoControlResolver implementation.
-func (r *Resolver) OrgIsoControl() OrgIsoControlResolver { return &orgIsoControlResolver{r} }
-
-type orgIsoControlResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *Resolver) IsoControls(ctx context.Context, theme *string) ([]*model.IsoControl, error) {
-	var controls []*model.IsoControl
+	var oc *model.OrgIsoControl
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		controls, err = r.IsoControlRepo.ListControls(ctx, tx, theme)
-		return err
-	})
-	return controls, err
-}
-func (r *Resolver) IsoControl(ctx context.Context, id string) (*model.IsoControl, error) {
-	var c *model.IsoControl
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		c, err = r.IsoControlRepo.GetByID(ctx, tx, id)
-		return err
-	})
-	return c, err
-}
-
-type OrgIsoControlConnection struct {
-	Edges      []*OrgIsoControlEdge `json:"edges"`
-	PageInfo   *PageInfo            `json:"pageInfo"`
-	TotalCount int                  `json:"totalCount"`
-}
-type OrgIsoControlEdge struct {
-	Cursor string               `json:"cursor"`
-	Node   *model.OrgIsoControl `json:"node"`
-}
-
-func (r *Resolver) OrgIsoControls(ctx context.Context, first *int, after *string, filter *repository.IsoFilter) (*OrgIsoControlConnection, error) {
-	params := paginationParams(first, after)
-	var controls []*model.OrgIsoControl
-	var pr repository.PaginationResult
-
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		controls, pr, err = r.IsoControlRepo.ListOrgControls(ctx, tx, params, filter)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]*OrgIsoControlEdge, len(controls))
-	for i, c := range controls {
-		edges[i] = &OrgIsoControlEdge{Cursor: repository.EncodeCursor(i), Node: c}
-	}
-	return &OrgIsoControlConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
-}
-func (r *Resolver) UpdateOrgIsoControl(ctx context.Context, input UpdateOrgIsoControlInput) (*model.OrgIsoControl, error) {
-	oc := &model.OrgIsoControl{
-		IsoControlID: input.IsoControlID,
-	}
-
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		// Try to get existing
-		existing, err := r.IsoControlRepo.GetOrgControlByIsoControlID(ctx, tx, input.IsoControlID)
-		if err == nil {
-			oc = existing
+		oc, err = r.IsoControlRepo.GetOrgControl(ctx, tx, id)
+		if err != nil {
+			existing, upsertErr := r.IsoControlRepo.GetOrgControlByIsoControlID(ctx, tx, id)
+			if upsertErr != nil {
+				oc = &model.OrgIsoControl{IsoControlID: id}
+			} else {
+				oc = existing
+			}
 		}
 
 		if input.Applicability != nil {
@@ -154,33 +46,102 @@ func (r *Resolver) UpdateOrgIsoControl(ctx context.Context, input UpdateOrgIsoCo
 
 		return r.IsoControlRepo.UpsertOrgControl(ctx, tx, oc)
 	})
-
 	return oc, err
 }
-func (r *Resolver) OrgIsoControlRef(ctx context.Context, oc *model.OrgIsoControl) (*model.IsoControl, error) {
+
+// Control is the resolver for the control field.
+func (r *orgIsoControlResolver) Control(ctx context.Context, obj *model.OrgIsoControl) (*model.IsoControl, error) {
 	var c *model.IsoControl
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		c, err = r.IsoControlRepo.GetByID(ctx, tx, oc.IsoControlID)
+		c, err = r.IsoControlRepo.GetByID(ctx, tx, obj.IsoControlID)
 		return err
 	})
 	return c, err
 }
-func (r *Resolver) ComplianceSnapshot(ctx context.Context) (*repository.ComplianceSummary, error) {
-	var s *repository.ComplianceSummary
-	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		s, err = r.IsoControlRepo.GetComplianceSummary(ctx, tx)
-		return err
-	})
-	return s, err
+
+// ResponsibleOwner is the resolver for the responsibleOwner field.
+func (r *orgIsoControlResolver) ResponsibleOwner(ctx context.Context, obj *model.OrgIsoControl) (*model.User, error) {
+	if obj.ResponsibleOwnerID == nil {
+		return nil, nil
+	}
+	return r.resolveUser(ctx, *obj.ResponsibleOwnerID)
 }
 
-type UpdateOrgIsoControlInput struct {
-	IsoControlID                  string  `json:"isoControlId"`
-	Applicability                 *string `json:"applicability"`
-	NonApplicabilityJustification *string `json:"nonApplicabilityJustification"`
-	ImplementationStatus          *string `json:"implementationStatus"`
-	ImplementationDescription     *string `json:"implementationDescription"`
-	ResponsibleOwnerID            *string `json:"responsibleOwnerId"`
+// Assets is the resolver for the assets field.
+func (r *orgIsoControlResolver) Assets(ctx context.Context, obj *model.OrgIsoControl, first *int, after *string) (*model1.AssetConnection, error) {
+	return &model1.AssetConnection{Edges: []*model1.AssetEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
 }
+
+// Risks is the resolver for the risks field.
+func (r *orgIsoControlResolver) Risks(ctx context.Context, obj *model.OrgIsoControl, first *int, after *string) (*model1.RiskConnection, error) {
+	return &model1.RiskConnection{Edges: []*model1.RiskEdge{}, PageInfo: &model1.PageInfo{}, TotalCount: 0}, nil
+}
+
+// Comments is the resolver for the comments field.
+func (r *orgIsoControlResolver) Comments(ctx context.Context, obj *model.OrgIsoControl, first *int, after *string) (*model1.CommentConnection, error) {
+	return r.entityComments(ctx, "org_iso_control", obj.ID, first, after)
+}
+
+// Evidence is the resolver for the evidence field.
+func (r *orgIsoControlResolver) Evidence(ctx context.Context, obj *model.OrgIsoControl, first *int, after *string) (*model1.EvidenceConnection, error) {
+	return r.entityEvidence(ctx, "org_iso_control", obj.ID, first, after)
+}
+
+// IsoControls is the resolver for the isoControls field.
+func (r *queryResolver) IsoControls(ctx context.Context, theme *string) ([]*model.IsoControl, error) {
+	var controls []*model.IsoControl
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		controls, err = r.IsoControlRepo.ListControls(ctx, tx, theme)
+		return err
+	})
+	return controls, err
+}
+
+// OrgIsoControls is the resolver for the orgIsoControls field.
+func (r *queryResolver) OrgIsoControls(ctx context.Context, first *int, after *string, filter *model1.OrgIsoControlFilter) (*model1.OrgIsoControlConnection, error) {
+	params := paginationParams(first, after)
+	var repoFilter *repository.IsoFilter
+	if filter != nil {
+		repoFilter = &repository.IsoFilter{
+			ImplementationStatus: filter.ImplementationStatus,
+			Theme:                filter.Theme,
+			Search:               filter.Search,
+		}
+	}
+
+	var controls []*model.OrgIsoControl
+	var pr repository.PaginationResult
+
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		controls, pr, err = r.IsoControlRepo.ListOrgControls(ctx, tx, params, repoFilter)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	edges := make([]*model1.OrgIsoControlEdge, len(controls))
+	for i, c := range controls {
+		edges[i] = &model1.OrgIsoControlEdge{Cursor: repository.EncodeCursor(i), Node: c}
+	}
+	return &model1.OrgIsoControlConnection{Edges: edges, PageInfo: toPageInfo(pr), TotalCount: pr.TotalCount}, nil
+}
+
+// OrgIsoControl is the resolver for the orgIsoControl field.
+func (r *queryResolver) OrgIsoControl(ctx context.Context, id string) (*model.OrgIsoControl, error) {
+	var oc *model.OrgIsoControl
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		oc, err = r.IsoControlRepo.GetOrgControl(ctx, tx, id)
+		return err
+	})
+	return oc, err
+}
+
+// OrgIsoControl returns OrgIsoControlResolver implementation.
+func (r *Resolver) OrgIsoControl() OrgIsoControlResolver { return &orgIsoControlResolver{r} }
+
+type orgIsoControlResolver struct{ *Resolver }

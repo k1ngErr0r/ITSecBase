@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/jmcintyre/secbase/api/internal/auth"
@@ -17,76 +16,119 @@ import (
 
 // VulnOverview is the resolver for the vulnOverview field.
 func (r *queryResolver) VulnOverview(ctx context.Context) (*model1.VulnOverview, error) {
-	panic(fmt.Errorf("not implemented: VulnOverview - vulnOverview"))
-}
-
-// RiskPosture is the resolver for the riskPosture field.
-func (r *queryResolver) RiskPosture(ctx context.Context) (*model1.RiskPosture, error) {
-	panic(fmt.Errorf("not implemented: RiskPosture - riskPosture"))
-}
-
-// IncidentStatus is the resolver for the incidentStatus field.
-func (r *queryResolver) IncidentStatus(ctx context.Context) (*model1.IncidentStatusSummary, error) {
-	panic(fmt.Errorf("not implemented: IncidentStatus - incidentStatus"))
-}
-
-// ComplianceSnapshot is the resolver for the complianceSnapshot field.
-func (r *queryResolver) ComplianceSnapshot(ctx context.Context) (*model1.ComplianceSnapshot, error) {
-	panic(fmt.Errorf("not implemented: ComplianceSnapshot - complianceSnapshot"))
-}
-
-// DrReadiness is the resolver for the drReadiness field.
-func (r *queryResolver) DrReadiness(ctx context.Context) (*model1.DrReadiness, error) {
-	panic(fmt.Errorf("not implemented: DrReadiness - drReadiness"))
-}
-
-// MyTasks is the resolver for the myTasks field.
-func (r *queryResolver) MyTasks(ctx context.Context) (*model1.MyTasks, error) {
-	panic(fmt.Errorf("not implemented: MyTasks - myTasks"))
-}
-
-// CveFeed is the resolver for the cveFeed field.
-func (r *queryResolver) CveFeed(ctx context.Context, limit *int) ([]*model.CveFeedEntry, error) {
-	panic(fmt.Errorf("not implemented: CveFeed - cveFeed"))
-}
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *Resolver) VulnOverview(ctx context.Context) (*repository.VulnOverview, error) {
 	var o *repository.VulnOverview
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		o, err = r.DashboardRepo.GetVulnOverview(ctx, tx)
 		return err
 	})
-	return o, err
+	if err != nil {
+		return nil, err
+	}
+	return &model1.VulnOverview{
+		TotalOpen:     o.TotalOpen,
+		CriticalCount: o.CriticalCount,
+		HighCount:     o.HighCount,
+		MediumCount:   o.MediumCount,
+		LowCount:      o.LowCount,
+	}, nil
 }
-func (r *Resolver) IncidentStatusSummary(ctx context.Context) (*repository.IncidentSummary, error) {
+
+// RiskPosture is the resolver for the riskPosture field.
+func (r *queryResolver) RiskPosture(ctx context.Context) (*model1.RiskPosture, error) {
+	var cells []repository.HeatmapCell
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		cells, err = r.RiskRepo.GetHeatmapData(ctx, tx)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	heatmap := make([]*model1.HeatmapCell, len(cells))
+	for i, c := range cells {
+		heatmap[i] = &model1.HeatmapCell{
+			Likelihood: c.Likelihood,
+			Impact:     c.Impact,
+			Count:      c.Count,
+		}
+	}
+	return &model1.RiskPosture{
+		CountsByLevel: []*model1.LevelCount{},
+		HeatmapData:   heatmap,
+	}, nil
+}
+
+// IncidentStatus is the resolver for the incidentStatus field.
+func (r *queryResolver) IncidentStatus(ctx context.Context) (*model1.IncidentStatusSummary, error) {
 	var s *repository.IncidentSummary
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		s, err = r.DashboardRepo.GetIncidentSummary(ctx, tx)
 		return err
 	})
-	return s, err
+	if err != nil {
+		return nil, err
+	}
+	return &model1.IncidentStatusSummary{
+		OpenByImpact:   []*model1.ImpactCount{},
+		SLABreaches:    s.SLABreaches,
+		RecentTimeline: []*model1.IncidentTimelineEntry{},
+	}, nil
 }
-func (r *Resolver) DrReadiness(ctx context.Context) (*repository.DrReadiness, error) {
+
+// ComplianceSnapshot is the resolver for the complianceSnapshot field.
+func (r *queryResolver) ComplianceSnapshot(ctx context.Context) (*model1.ComplianceSnapshot, error) {
+	var s *repository.ComplianceSummary
+	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		s, err = r.IsoControlRepo.GetComplianceSummary(ctx, tx)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	total := float64(s.Implemented + s.PartiallyImplemented + s.NotImplemented + s.NotApplicable)
+	if total == 0 {
+		return &model1.ComplianceSnapshot{TopGaps: []*model1.ControlGap{}}, nil
+	}
+	return &model1.ComplianceSnapshot{
+		ImplementedPct:          float64(s.Implemented) / total * 100,
+		PartiallyImplementedPct: float64(s.PartiallyImplemented) / total * 100,
+		NotImplementedPct:       float64(s.NotImplemented) / total * 100,
+		NotApplicablePct:        float64(s.NotApplicable) / total * 100,
+		TopGaps:                 []*model1.ControlGap{},
+	}, nil
+}
+
+// DrReadiness is the resolver for the drReadiness field.
+func (r *queryResolver) DrReadiness(ctx context.Context) (*model1.DrReadiness, error) {
 	var d *repository.DrReadiness
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
 		d, err = r.DashboardRepo.GetDrReadiness(ctx, tx)
 		return err
 	})
-	return d, err
+	if err != nil {
+		return nil, err
+	}
+	var lastResult *string
+	if d.LastTestResult != "" {
+		lastResult = &d.LastTestResult
+	}
+	return &model1.DrReadiness{
+		NextTestDate:   d.NextTestDate,
+		LastTestDate:   d.LastTestDate,
+		LastTestResult: lastResult,
+	}, nil
 }
-func (r *Resolver) MyTasks(ctx context.Context) (*repository.MyTasks, error) {
+
+// MyTasks is the resolver for the myTasks field.
+func (r *queryResolver) MyTasks(ctx context.Context) (*model1.MyTasks, error) {
 	userID, ok := auth.UserIDFromContext(ctx)
 	if !ok {
-		return &repository.MyTasks{}, nil
+		return &model1.MyTasks{}, nil
 	}
 	var t *repository.MyTasks
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
@@ -94,9 +136,19 @@ func (r *Resolver) MyTasks(ctx context.Context) (*repository.MyTasks, error) {
 		t, err = r.DashboardRepo.GetMyTasks(ctx, tx, userID)
 		return err
 	})
-	return t, err
+	if err != nil {
+		return nil, err
+	}
+	return &model1.MyTasks{
+		AssignedVulnCount:     t.Vulnerabilities,
+		AssignedRiskCount:     t.Risks,
+		AssignedIncidentCount: t.Incidents,
+		AssignedActionCount:   t.Actions,
+	}, nil
 }
-func (r *Resolver) CveFeed(ctx context.Context, limit *int) ([]*model.CveFeedEntry, error) {
+
+// CveFeed is the resolver for the cveFeed field.
+func (r *queryResolver) CveFeed(ctx context.Context, limit *int) ([]*model.CveFeedEntry, error) {
 	n := 20
 	if limit != nil && *limit > 0 {
 		n = *limit

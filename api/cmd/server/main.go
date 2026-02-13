@@ -19,6 +19,7 @@ import (
 	"github.com/jmcintyre/secbase/api/internal/config"
 	"github.com/jmcintyre/secbase/api/internal/database"
 	"github.com/jmcintyre/secbase/api/internal/graph"
+	uploadhandler "github.com/jmcintyre/secbase/api/internal/handler"
 	"github.com/jmcintyre/secbase/api/internal/middleware"
 	"github.com/jmcintyre/secbase/api/internal/telemetry"
 )
@@ -101,11 +102,20 @@ func main() {
 	// Playground
 	r.Get("/", playground.Handler("SecBase GraphQL", "/graphql"))
 
-	// Health check
+	// Health check with DB ping
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if err := db.Pool.Ping(r.Context()); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte(`{"status":"unhealthy","error":"database unreachable"}`))
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
 	})
+
+	// File upload endpoint
+	r.Post("/api/upload", uploadhandler.UploadHandler(cfg.UploadDir))
 
 	// Start server
 	srv := &http.Server{

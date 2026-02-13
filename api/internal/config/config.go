@@ -7,10 +7,11 @@ import (
 )
 
 type Config struct {
-	Postgres PostgresConfig
-	JWT      JWTConfig
-	API      APIConfig
-	OTel     OTelConfig
+	Postgres  PostgresConfig
+	JWT       JWTConfig
+	API       APIConfig
+	OTel      OTelConfig
+	UploadDir string
 }
 
 type PostgresConfig struct {
@@ -78,6 +79,7 @@ func Load() (*Config, error) {
 			Endpoint:    getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", ""),
 			ServiceName: getEnv("OTEL_SERVICE_NAME", "secbase-api"),
 		},
+		UploadDir: getEnv("UPLOAD_DIR", "uploads"),
 	}, nil
 }
 
