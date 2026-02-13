@@ -83,8 +83,13 @@ func main() {
 	r.Use(middleware.TracingMiddleware)
 	r.Use(middleware.RequestLogger)
 	r.Use(chimw.Recoverer)
+
+	// Rate limiting (per-IP token bucket)
+	rl := middleware.NewRateLimiter(cfg.RateLimit.RPS, cfg.RateLimit.Burst)
+	r.Use(rl.Middleware)
+
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:5173"},
+		AllowedOrigins:   cfg.CORSOrigins,
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:   []string{"Link"},

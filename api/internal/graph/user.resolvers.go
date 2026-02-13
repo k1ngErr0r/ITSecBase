@@ -39,9 +39,17 @@ func (r *groupResolver) Members(ctx context.Context, obj *model.Group, first *in
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model1.CreateUserInput) (*model.User, error) {
+	if err := auth.RequireRole(ctx, auth.RoleAdmin); err != nil {
+		return nil, err
+	}
+
 	orgID, ok := auth.OrgIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
+	}
+
+	if err := auth.ValidatePasswordStrength(input.Password); err != nil {
+		return nil, err
 	}
 
 	hashed, err := auth.HashPassword(input.Password)
@@ -108,18 +116,28 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id string, input mode
 
 // DisableUser is the resolver for the disableUser field.
 func (r *mutationResolver) DisableUser(ctx context.Context, id string) (*model.User, error) {
+	if err := auth.RequireRole(ctx, auth.RoleAdmin); err != nil {
+		return nil, err
+	}
 	disabled := "disabled"
 	return r.UpdateUser(ctx, id, model1.UpdateUserInput{Status: &disabled})
 }
 
 // EnableUser is the resolver for the enableUser field.
 func (r *mutationResolver) EnableUser(ctx context.Context, id string) (*model.User, error) {
+	if err := auth.RequireRole(ctx, auth.RoleAdmin); err != nil {
+		return nil, err
+	}
 	active := "active"
 	return r.UpdateUser(ctx, id, model1.UpdateUserInput{Status: &active})
 }
 
 // CreateGroup is the resolver for the createGroup field.
 func (r *mutationResolver) CreateGroup(ctx context.Context, input model1.CreateGroupInput) (*model.Group, error) {
+	if err := auth.RequireRole(ctx, auth.RoleAdmin); err != nil {
+		return nil, err
+	}
+
 	orgID, ok := auth.OrgIDFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("authentication required")
@@ -142,6 +160,10 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, input model1.CreateG
 
 // UpdateGroup is the resolver for the updateGroup field.
 func (r *mutationResolver) UpdateGroup(ctx context.Context, id string, input model1.UpdateGroupInput) (*model.Group, error) {
+	if err := auth.RequireRole(ctx, auth.RoleAdmin); err != nil {
+		return nil, err
+	}
+
 	var g *model.Group
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		var err error
@@ -165,6 +187,10 @@ func (r *mutationResolver) UpdateGroup(ctx context.Context, id string, input mod
 
 // DeleteGroup is the resolver for the deleteGroup field.
 func (r *mutationResolver) DeleteGroup(ctx context.Context, id string) (bool, error) {
+	if err := auth.RequireRole(ctx, auth.RoleAdmin); err != nil {
+		return false, err
+	}
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.UserRepo.DeleteGroup(ctx, tx, id)
 	})
@@ -173,6 +199,10 @@ func (r *mutationResolver) DeleteGroup(ctx context.Context, id string) (bool, er
 
 // AddUserToGroup is the resolver for the addUserToGroup field.
 func (r *mutationResolver) AddUserToGroup(ctx context.Context, userID string, groupID string) (bool, error) {
+	if err := auth.RequireRole(ctx, auth.RoleAdmin); err != nil {
+		return false, err
+	}
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.UserRepo.AddUserToGroup(ctx, tx, userID, groupID)
 	})
@@ -181,6 +211,10 @@ func (r *mutationResolver) AddUserToGroup(ctx context.Context, userID string, gr
 
 // RemoveUserFromGroup is the resolver for the removeUserFromGroup field.
 func (r *mutationResolver) RemoveUserFromGroup(ctx context.Context, userID string, groupID string) (bool, error) {
+	if err := auth.RequireRole(ctx, auth.RoleAdmin); err != nil {
+		return false, err
+	}
+
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {
 		return r.UserRepo.RemoveUserFromGroup(ctx, tx, userID, groupID)
 	})
@@ -192,6 +226,10 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, currentPassword s
 	userID, ok := auth.UserIDFromContext(ctx)
 	if !ok {
 		return false, fmt.Errorf("authentication required")
+	}
+
+	if err := auth.ValidatePasswordStrength(newPassword); err != nil {
+		return false, err
 	}
 
 	err := r.DB.WithTx(ctx, func(tx pgx.Tx) error {

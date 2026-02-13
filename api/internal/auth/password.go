@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"golang.org/x/crypto/argon2"
 )
@@ -89,4 +90,46 @@ func parseHash(encodedHash string) (salt, hash []byte, params argonParams, err e
 	params.keyLen = uint32(len(hash))
 
 	return salt, hash, params, nil
+}
+
+// ValidatePasswordStrength enforces password complexity requirements.
+// Requires: minimum 10 characters, at least 1 uppercase, 1 lowercase, 1 digit, 1 special character.
+func ValidatePasswordStrength(password string) error {
+	if len(password) < 10 {
+		return fmt.Errorf("password must be at least 10 characters long")
+	}
+
+	var hasUpper, hasLower, hasDigit, hasSpecial bool
+	for _, ch := range password {
+		switch {
+		case unicode.IsUpper(ch):
+			hasUpper = true
+		case unicode.IsLower(ch):
+			hasLower = true
+		case unicode.IsDigit(ch):
+			hasDigit = true
+		case unicode.IsPunct(ch) || unicode.IsSymbol(ch):
+			hasSpecial = true
+		}
+	}
+
+	var missing []string
+	if !hasUpper {
+		missing = append(missing, "uppercase letter")
+	}
+	if !hasLower {
+		missing = append(missing, "lowercase letter")
+	}
+	if !hasDigit {
+		missing = append(missing, "digit")
+	}
+	if !hasSpecial {
+		missing = append(missing, "special character")
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("password must contain at least one %s", strings.Join(missing, ", "))
+	}
+
+	return nil
 }
