@@ -25,7 +25,8 @@
     "react-dom": "^18.3.1",
     "react-relay": "^17.0.0",
     "react-router-dom": "^6.22.3",
-    "relay-runtime": "^17.0.0"
+    "relay-runtime": "^17.0.0",
+    "vite-plugin-relay": "^2.1.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
