@@ -47,11 +47,11 @@ describe('Login', () => {
   })
 
   it('shows error on failed login', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       json: () => Promise.resolve({
         errors: [{ message: 'invalid email or password' }],
       }),
-    })
+    }))
 
     renderLogin()
 
@@ -65,7 +65,7 @@ describe('Login', () => {
   })
 
   it('navigates to / on successful login', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       json: () => Promise.resolve({
         data: {
           login: {
@@ -80,7 +80,7 @@ describe('Login', () => {
           },
         },
       }),
-    })
+    }))
 
     renderLogin()
 
@@ -97,11 +97,11 @@ describe('Login', () => {
   })
 
   it('shows TOTP field when server requires 2FA', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       json: () => Promise.resolve({
         errors: [{ message: 'TOTP required' }],
       }),
-    })
+    }))
 
     renderLogin()
 
@@ -115,7 +115,7 @@ describe('Login', () => {
   })
 
   it('shows network error on fetch failure', async () => {
-    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')))
 
     renderLogin()
 
@@ -129,12 +129,12 @@ describe('Login', () => {
   })
 
   it('disables button while loading', async () => {
-    let resolveLogin: (value: any) => void
-    global.fetch = vi.fn().mockReturnValue(
+    let resolveLogin: (value: unknown) => void
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(
       new Promise((resolve) => {
         resolveLogin = resolve
       }),
-    )
+    ))
 
     renderLogin()
 
