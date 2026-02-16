@@ -10,7 +10,7 @@ INSERT INTO users (id, org_id, email, password_hash, display_name, job_title, st
     ('b0000000-0000-0000-0000-000000000001',
      'a0000000-0000-0000-0000-000000000001',
      'admin@secbase.local',
-     '$argon2id$v=19$m=65536,t=1,p=4$ZkUiqiA96vOTOVDjGdF8zA$P9i57ysBUfMnU4yj9yUncO8jj4TqG0n4WplY3XG4xVc',
+     $hash$$argon2id$v=19$m=65536,t=1,p=4$ZkUiqiA96vOTOVDjGdF8zA$P9i57ysBUfMnU4yj9yUncO8jj4TqG0n4WplY3XG4xVc$hash$,
      'System Administrator',
      'InfoSec Manager',
      'active');
