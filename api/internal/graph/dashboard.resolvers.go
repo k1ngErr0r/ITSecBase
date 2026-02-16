@@ -43,8 +43,8 @@ func (r *queryResolver) VulnOverview(ctx context.Context) (*model1.VulnOverview,
 		MediumCount:   o.MediumCount,
 		LowCount:      o.LowCount,
 		MttrDays:      mttr,
-		TopAssets:      []*model1.AssetVulnCount{},
-		TopCves:        []*model1.CveCount{},
+		TopAssets:     []*model1.AssetVulnCount{},
+		TopCves:       []*model1.CveCount{},
 	}
 
 	// Resolve top assets
