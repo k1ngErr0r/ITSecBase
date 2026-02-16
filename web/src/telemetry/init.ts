@@ -6,13 +6,14 @@ import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 import { ZoneContextManager } from '@opentelemetry/context-zone'
 import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch'
 
-const OTEL_ENDPOINT = import.meta.env.VITE_OTEL_ENDPOINT || '/v1/traces'
+const OTEL_ENDPOINT = import.meta.env.VITE_OTEL_ENDPOINT as string | undefined
 const SERVICE_NAME = 'secbase-web'
 
 let provider: WebTracerProvider | null = null
 
 /**
  * Initializes OpenTelemetry browser tracing. Call once at app startup.
+ * Only activates when VITE_OTEL_ENDPOINT is explicitly set.
  *
  * - Instruments all fetch() calls (including Relay GraphQL requests)
  * - Exports spans via OTLP/HTTP to the collector
@@ -20,37 +21,42 @@ let provider: WebTracerProvider | null = null
  */
 export function initTelemetry(): void {
   if (provider) return // Already initialised
+  if (!OTEL_ENDPOINT) return // Telemetry not configured
 
-  const resource = new Resource({
-    [ATTR_SERVICE_NAME]: SERVICE_NAME,
-  })
+  try {
+    const resource = new Resource({
+      [ATTR_SERVICE_NAME]: SERVICE_NAME,
+    })
 
-  const exporter = new OTLPTraceExporter({
-    url: OTEL_ENDPOINT,
-  })
+    const exporter = new OTLPTraceExporter({
+      url: OTEL_ENDPOINT,
+    })
 
-  provider = new WebTracerProvider({
-    resource,
-  })
+    provider = new WebTracerProvider({
+      resource,
+    })
 
-  provider.addSpanProcessor(new BatchSpanProcessor(exporter, {
-    maxQueueSize: 100,
-    scheduledDelayMillis: 5000,
-  }))
+    provider.addSpanProcessor(new BatchSpanProcessor(exporter, {
+      maxQueueSize: 100,
+      scheduledDelayMillis: 5000,
+    }))
 
-  provider.register({
-    contextManager: new ZoneContextManager(),
-  })
+    provider.register({
+      contextManager: new ZoneContextManager(),
+    })
 
-  // Auto-instrument fetch (used by Relay)
-  const fetchInstrumentation = new FetchInstrumentation({
-    propagateTraceHeaderCorsUrls: [/\/graphql/],
-    clearTimingResources: true,
-  })
-  fetchInstrumentation.setTracerProvider(provider)
-  fetchInstrumentation.enable()
+    // Auto-instrument fetch (used by Relay)
+    const fetchInstrumentation = new FetchInstrumentation({
+      propagateTraceHeaderCorsUrls: [/\/graphql/],
+      clearTimingResources: true,
+    })
+    fetchInstrumentation.setTracerProvider(provider)
+    fetchInstrumentation.enable()
 
-  console.info('[OTel] Browser tracing initialized', { endpoint: OTEL_ENDPOINT })
+    console.info('[OTel] Browser tracing initialized', { endpoint: OTEL_ENDPOINT })
+  } catch (err) {
+    console.warn('[OTel] Failed to initialize browser tracing', err)
+  }
 }
 
 /**
