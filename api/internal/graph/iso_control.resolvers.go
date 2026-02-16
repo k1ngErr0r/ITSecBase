@@ -8,9 +8,9 @@ import (
 	"context"
 
 	pgx "github.com/jackc/pgx/v5"
-	model1 "github.com/jmcintyre/secbase/api/internal/graph/model"
-	"github.com/jmcintyre/secbase/api/internal/model"
-	"github.com/jmcintyre/secbase/api/internal/repository"
+	model1 "github.com/k1ngErr0r/ITSecBase/api/internal/graph/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/repository"
 )
 
 // UpdateOrgIsoControl is the resolver for the updateOrgIsoControl field.

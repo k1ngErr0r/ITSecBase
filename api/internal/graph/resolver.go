@@ -1,9 +1,9 @@
 package graph
 
 import (
-	"github.com/jmcintyre/secbase/api/internal/config"
-	"github.com/jmcintyre/secbase/api/internal/database"
-	"github.com/jmcintyre/secbase/api/internal/repository"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/config"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/database"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/repository"
 )
 
 // Resolver is the root resolver holding shared dependencies.

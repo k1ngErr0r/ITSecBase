@@ -15,13 +15,13 @@ import (
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
-	"github.com/jmcintyre/secbase/api/internal/auth"
-	"github.com/jmcintyre/secbase/api/internal/config"
-	"github.com/jmcintyre/secbase/api/internal/database"
-	"github.com/jmcintyre/secbase/api/internal/graph"
-	uploadhandler "github.com/jmcintyre/secbase/api/internal/handler"
-	"github.com/jmcintyre/secbase/api/internal/middleware"
-	"github.com/jmcintyre/secbase/api/internal/telemetry"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/auth"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/config"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/database"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/graph"
+	uploadhandler "github.com/k1ngErr0r/ITSecBase/api/internal/handler"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/middleware"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/telemetry"
 )
 
 func main() {

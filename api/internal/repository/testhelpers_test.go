@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jmcintyre/secbase/api/internal/database"
-	"github.com/jmcintyre/secbase/api/internal/middleware"
-	"github.com/jmcintyre/secbase/api/internal/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/database"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/middleware"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/model"
 
 	"github.com/jackc/pgx/v5"
 )

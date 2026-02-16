@@ -5,7 +5,7 @@ package model
 import (
 	"time"
 
-	"github.com/jmcintyre/secbase/api/internal/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/model"
 )
 
 type AddCommentInput struct {

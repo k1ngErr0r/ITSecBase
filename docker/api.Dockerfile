@@ -10,6 +10,7 @@ RUN go mod download
 
 COPY api/ .
 
+RUN go run github.com/99designs/gqlgen generate
 RUN CGO_ENABLED=0 GOOS=linux go build -o /build/bin/server ./cmd/server
 
 # Runtime stage

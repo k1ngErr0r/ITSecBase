@@ -45,14 +45,14 @@ SecBase is a multi-tenant information security management platform providing cen
 
 ```bash
 # Clone and start
-git clone <repo-url> && cd ITSecBase
+git clone https://github.com/k1ngErr0r/ITSecBase.git && cd ITSecBase
 cp .env.example .env
 docker compose up -d
 
 # Access
 # Frontend: http://localhost:3000
 # GraphQL Playground: http://localhost:8080
-# Default login: admin@secbase.local / Admin123!@#
+# Default login: admin@secbase.local / Admin123!
 ```
 
 ## Development Setup

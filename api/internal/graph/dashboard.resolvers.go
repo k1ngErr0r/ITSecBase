@@ -8,10 +8,10 @@ import (
 	"context"
 
 	pgx "github.com/jackc/pgx/v5"
-	"github.com/jmcintyre/secbase/api/internal/auth"
-	model1 "github.com/jmcintyre/secbase/api/internal/graph/model"
-	"github.com/jmcintyre/secbase/api/internal/model"
-	"github.com/jmcintyre/secbase/api/internal/repository"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/auth"
+	model1 "github.com/k1ngErr0r/ITSecBase/api/internal/graph/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/repository"
 )
 
 // VulnOverview is the resolver for the vulnOverview field.

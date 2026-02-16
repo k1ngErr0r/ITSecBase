@@ -8,6 +8,7 @@ RUN npm ci
 
 COPY web/ .
 
+RUN mkdir -p src/__generated__
 RUN npm run relay
 RUN npm run build
 

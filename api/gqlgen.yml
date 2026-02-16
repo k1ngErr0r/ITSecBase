@@ -15,7 +15,7 @@ resolver:
   package: graph
 
 autobind:
-  - github.com/jmcintyre/secbase/api/internal/model
+  - github.com/k1ngErr0r/ITSecBase/api/internal/model
 
 models:
   ID:
@@ -26,7 +26,7 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
   Node:
     model:
-      - github.com/jmcintyre/secbase/api/internal/graph/model.Node
+      - github.com/k1ngErr0r/ITSecBase/api/internal/graph/model.Node
   Time:
     model:
       - github.com/99designs/gqlgen/graphql.Time

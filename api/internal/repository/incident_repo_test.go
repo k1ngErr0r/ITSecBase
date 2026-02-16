@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jmcintyre/secbase/api/internal/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/model"
 )
 
 func TestIncidentRepo_CreateAndGetByID(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jmcintyre/secbase/api/internal/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/model"
 )
 
 func TestUserRepo_CreateAndGetByID(t *testing.T) {

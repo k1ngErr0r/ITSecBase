@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/jmcintyre/secbase/api/internal/middleware"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/middleware"
 )
 
 // Middleware returns an HTTP middleware that validates JWT tokens.

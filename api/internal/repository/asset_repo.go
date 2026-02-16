@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jmcintyre/secbase/api/internal/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/model"
 )
 
 type AssetRepo struct{}

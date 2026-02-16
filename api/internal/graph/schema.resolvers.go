@@ -11,9 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	pgx "github.com/jackc/pgx/v5"
-	"github.com/jmcintyre/secbase/api/internal/auth"
-	model1 "github.com/jmcintyre/secbase/api/internal/graph/model"
-	"github.com/jmcintyre/secbase/api/internal/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/auth"
+	model1 "github.com/k1ngErr0r/ITSecBase/api/internal/graph/model"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/model"
 )
 
 // Login is the resolver for the login field.

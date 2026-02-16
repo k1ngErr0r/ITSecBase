@@ -1,4 +1,4 @@
-module github.com/jmcintyre/secbase/api
+module github.com/k1ngErr0r/ITSecBase/api
 
 go 1.24.0
 

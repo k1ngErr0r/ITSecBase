@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/jmcintyre/secbase/api/internal/middleware"
+	"github.com/k1ngErr0r/ITSecBase/api/internal/middleware"
 	"github.com/pressly/goose/v3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
