@@ -22,7 +22,7 @@ func TestRequestLogger_LogsRequest(t *testing.T) {
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("response body"))
+		_, _ = w.Write([]byte("response body"))
 	})
 
 	middleware := RequestLogger(nextHandler)
@@ -157,7 +157,7 @@ func TestRequestLogger_BytesWritten(t *testing.T) {
 
 	responseBody := "test response body"
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(responseBody))
+		_, _ = w.Write([]byte(responseBody))
 	})
 
 	middleware := RequestLogger(nextHandler)
@@ -290,9 +290,9 @@ func TestRequestLogger_MultipleWrites(t *testing.T) {
 	slog.SetDefault(logger)
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("part1"))
-		w.Write([]byte("part2"))
-		w.Write([]byte("part3"))
+		_, _ = w.Write([]byte("part1"))
+		_, _ = w.Write([]byte("part2"))
+		_, _ = w.Write([]byte("part3"))
 	})
 
 	middleware := RequestLogger(nextHandler)
@@ -324,7 +324,7 @@ func TestRequestLogger_DefaultStatusCode(t *testing.T) {
 
 	// Handler that doesn't explicitly call WriteHeader
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("response"))
+		_, _ = w.Write([]byte("response"))
 	})
 
 	middleware := RequestLogger(nextHandler)

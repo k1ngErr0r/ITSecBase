@@ -73,7 +73,7 @@ func setupTestOrg(t *testing.T) (string, context.Context) {
 		t.Fatalf("create test org: %v", err)
 	}
 	t.Cleanup(func() {
-		testDB.Pool.Exec(context.Background(), "DELETE FROM organisations WHERE id = $1", orgID)
+		_, _ = testDB.Pool.Exec(context.Background(), "DELETE FROM organisations WHERE id = $1", orgID)
 	})
 	return orgID, middleware.WithOrgID(ctx, orgID)
 }

@@ -168,7 +168,9 @@ func TestUploadHandler_MultipleFiles(t *testing.T) {
 		t.Fatalf("failed to create form file: %v", err)
 	}
 	content1 := []byte("content 1")
-	part1.Write(content1)
+	if _, err := part1.Write(content1); err != nil {
+		t.Fatalf("failed to write: %v", err)
+	}
 	writer1.Close()
 
 	req1 := httptest.NewRequest(http.MethodPost, "/upload", body1)
@@ -178,7 +180,9 @@ func TestUploadHandler_MultipleFiles(t *testing.T) {
 	handler.ServeHTTP(rec1, req1)
 
 	var resp1 UploadResponse
-	json.NewDecoder(rec1.Body).Decode(&resp1)
+	if err := json.NewDecoder(rec1.Body).Decode(&resp1); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
 
 	// Upload second file
 	body2 := &bytes.Buffer{}
@@ -188,7 +192,9 @@ func TestUploadHandler_MultipleFiles(t *testing.T) {
 		t.Fatalf("failed to create form file: %v", err)
 	}
 	content2 := []byte("content 2")
-	part2.Write(content2)
+	if _, err := part2.Write(content2); err != nil {
+		t.Fatalf("failed to write: %v", err)
+	}
 	writer2.Close()
 
 	req2 := httptest.NewRequest(http.MethodPost, "/upload", body2)
@@ -198,7 +204,9 @@ func TestUploadHandler_MultipleFiles(t *testing.T) {
 	handler.ServeHTTP(rec2, req2)
 
 	var resp2 UploadResponse
-	json.NewDecoder(rec2.Body).Decode(&resp2)
+	if err := json.NewDecoder(rec2.Body).Decode(&resp2); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
 
 	// Verify both files have different IDs and paths
 	if resp1.ID == resp2.ID {
@@ -330,7 +338,9 @@ func TestUploadHandler_EmptyFile(t *testing.T) {
 	}
 
 	var resp UploadResponse
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
 
 	if resp.Size != 0 {
 		t.Errorf("expected size 0 for empty file, got %d", resp.Size)
@@ -365,7 +375,9 @@ func TestUploadHandler_FilenameWithPath(t *testing.T) {
 	}
 
 	testContent := []byte("malicious content")
-	part.Write(testContent)
+	if _, err := part.Write(testContent); err != nil {
+		t.Fatalf("failed to write: %v", err)
+	}
 	writer.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/upload", body)
@@ -400,7 +412,9 @@ func TestUploadHandler_ResponseContentType(t *testing.T) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, _ := writer.CreateFormFile("file", "test.txt")
-	part.Write([]byte("test"))
+	if _, err := part.Write([]byte("test")); err != nil {
+		t.Fatalf("failed to write: %v", err)
+	}
 	writer.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/upload", body)

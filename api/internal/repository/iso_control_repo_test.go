@@ -270,7 +270,7 @@ func TestIsoControlRepo_GetComplianceSummary(t *testing.T) {
 			return err
 		}
 		if summary == nil {
-			t.Error("GetComplianceSummary returned nil")
+			t.Fatal("GetComplianceSummary returned nil")
 		}
 		// Summary is global, so just verify it's populated
 		total := summary.Implemented + summary.PartiallyImplemented + summary.NotImplemented + summary.NotApplicable

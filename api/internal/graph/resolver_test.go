@@ -99,7 +99,7 @@ func testServer(t *testing.T) (http.Handler, string, context.Context) {
 		t.Fatalf("create test org: %v", err)
 	}
 	t.Cleanup(func() {
-		testDB.Pool.Exec(context.Background(), "DELETE FROM organisations WHERE id = $1", orgID)
+		_, _ = testDB.Pool.Exec(context.Background(), "DELETE FROM organisations WHERE id = $1", orgID)
 	})
 
 	// Create a test user via repo
@@ -481,7 +481,7 @@ func TestGraphQL_Login(t *testing.T) {
 		t.Fatalf("create test org: %v", err)
 	}
 	t.Cleanup(func() {
-		testDB.Pool.Exec(context.Background(), "DELETE FROM organisations WHERE id = $1", orgID)
+		_, _ = testDB.Pool.Exec(context.Background(), "DELETE FROM organisations WHERE id = $1", orgID)
 	})
 
 	orgCtx := middleware.WithOrgID(ctx, orgID)

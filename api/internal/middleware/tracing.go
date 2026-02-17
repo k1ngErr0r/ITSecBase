@@ -32,7 +32,7 @@ func TracingMiddleware(next http.Handler) http.Handler {
 				semconv.HTTPTargetKey.String(r.URL.Path),
 				semconv.HTTPSchemeKey.String(r.URL.Scheme),
 				semconv.UserAgentOriginal(r.UserAgent()),
-				semconv.HTTPRequestContentLength(int(r.ContentLength)),
+				attribute.Int("http.request_content_length", int(r.ContentLength)),
 				attribute.String("http.client_ip", r.RemoteAddr),
 			),
 		)
@@ -53,7 +53,7 @@ func TracingMiddleware(next http.Handler) http.Handler {
 
 		// Set response attributes
 		span.SetAttributes(
-			semconv.HTTPStatusCode(tw.statusCode),
+			attribute.Int("http.status_code", tw.statusCode),
 			attribute.Int("http.response_content_length", tw.bytesWritten),
 		)
 

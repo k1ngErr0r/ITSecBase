@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	oteltrace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestTracingMiddleware_CreatesSpan(t *testing.T) {
@@ -20,11 +21,11 @@ func TestTracingMiddleware_CreatesSpan(t *testing.T) {
 		trace.WithSpanProcessor(spanRecorder),
 	)
 	otel.SetTracerProvider(tracerProvider)
-	defer otel.SetTracerProvider(oteltrace.NewNoopTracerProvider())
+	defer otel.SetTracerProvider(noop.NewTracerProvider())
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("response"))
+		_, _ = w.Write([]byte("response"))
 	})
 
 	middleware := TracingMiddleware(nextHandler)
@@ -76,7 +77,7 @@ func TestTracingMiddleware_CreatesSpan(t *testing.T) {
 
 func TestTracingMiddleware_NoOpWhenNotConfigured(t *testing.T) {
 	// Use default no-op tracer provider
-	otel.SetTracerProvider(oteltrace.NewNoopTracerProvider())
+	otel.SetTracerProvider(noop.NewTracerProvider())
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -102,7 +103,7 @@ func TestTracingMiddleware_PropagatesContext(t *testing.T) {
 	)
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
-	defer otel.SetTracerProvider(oteltrace.NewNoopTracerProvider())
+	defer otel.SetTracerProvider(noop.NewTracerProvider())
 
 	var capturedContext context.Context
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +131,7 @@ func TestTracingMiddleware_IncludesOrgID(t *testing.T) {
 		trace.WithSpanProcessor(spanRecorder),
 	)
 	otel.SetTracerProvider(tracerProvider)
-	defer otel.SetTracerProvider(oteltrace.NewNoopTracerProvider())
+	defer otel.SetTracerProvider(noop.NewTracerProvider())
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -175,7 +176,7 @@ func TestTracingMiddleware_WithoutOrgID(t *testing.T) {
 		trace.WithSpanProcessor(spanRecorder),
 	)
 	otel.SetTracerProvider(tracerProvider)
-	defer otel.SetTracerProvider(oteltrace.NewNoopTracerProvider())
+	defer otel.SetTracerProvider(noop.NewTracerProvider())
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -232,7 +233,7 @@ func TestTracingMiddleware_StatusCodeAttributes(t *testing.T) {
 				trace.WithSpanProcessor(spanRecorder),
 			)
 			otel.SetTracerProvider(tracerProvider)
-			defer otel.SetTracerProvider(oteltrace.NewNoopTracerProvider())
+			defer otel.SetTracerProvider(noop.NewTracerProvider())
 
 			nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
@@ -282,11 +283,11 @@ func TestTracingMiddleware_ResponseContentLength(t *testing.T) {
 		trace.WithSpanProcessor(spanRecorder),
 	)
 	otel.SetTracerProvider(tracerProvider)
-	defer otel.SetTracerProvider(oteltrace.NewNoopTracerProvider())
+	defer otel.SetTracerProvider(noop.NewTracerProvider())
 
 	responseBody := "test response body"
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(responseBody))
+		_, _ = w.Write([]byte(responseBody))
 	})
 
 	middleware := TracingMiddleware(nextHandler)
@@ -326,7 +327,7 @@ func TestTracingMiddleware_InjectsTraceContext(t *testing.T) {
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 	defer func() {
-		otel.SetTracerProvider(oteltrace.NewNoopTracerProvider())
+		otel.SetTracerProvider(noop.NewTracerProvider())
 		otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator())
 	}()
 
@@ -356,7 +357,7 @@ func TestTracingMiddleware_ExtractsIncomingTraceContext(t *testing.T) {
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 	defer func() {
-		otel.SetTracerProvider(oteltrace.NewNoopTracerProvider())
+		otel.SetTracerProvider(noop.NewTracerProvider())
 		otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator())
 	}()
 
@@ -403,7 +404,7 @@ func TestTracingMiddleware_UserAgent(t *testing.T) {
 		trace.WithSpanProcessor(spanRecorder),
 	)
 	otel.SetTracerProvider(tracerProvider)
-	defer otel.SetTracerProvider(oteltrace.NewNoopTracerProvider())
+	defer otel.SetTracerProvider(noop.NewTracerProvider())
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
