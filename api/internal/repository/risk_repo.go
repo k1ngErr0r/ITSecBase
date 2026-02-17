@@ -16,6 +16,7 @@ func NewRiskRepo() *RiskRepo {
 
 func (r *RiskRepo) GetByID(ctx context.Context, tx pgx.Tx, id string) (*model.Risk, error) {
 	risk := &model.Risk{}
+	var il, ii, rl, ri *int
 	err := tx.QueryRow(ctx, `
 		SELECT id, org_id, title, description, scenario, category, source,
 		       inherent_likelihood, inherent_impact, residual_likelihood, residual_impact,
@@ -24,13 +25,25 @@ func (r *RiskRepo) GetByID(ctx context.Context, tx pgx.Tx, id string) (*model.Ri
 		FROM risks WHERE id = $1
 	`, id).Scan(
 		&risk.ID, &risk.OrgID, &risk.Title, &risk.Description, &risk.Scenario,
-		&risk.Category, &risk.Source, &risk.InherentLikelihood, &risk.InherentImpact,
-		&risk.ResidualLikelihood, &risk.ResidualImpact, &risk.Status, &risk.OwnerID,
+		&risk.Category, &risk.Source, &il, &ii,
+		&rl, &ri, &risk.Status, &risk.OwnerID,
 		&risk.ApproverID, &risk.ReviewDate, &risk.LastReviewedBy,
 		&risk.CreatedAt, &risk.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get risk: %w", err)
+	}
+	if il != nil {
+		risk.InherentLikelihood = *il
+	}
+	if ii != nil {
+		risk.InherentImpact = *ii
+	}
+	if rl != nil {
+		risk.ResidualLikelihood = *rl
+	}
+	if ri != nil {
+		risk.ResidualImpact = *ri
 	}
 	return risk, nil
 }
@@ -92,14 +105,27 @@ func (r *RiskRepo) List(ctx context.Context, tx pgx.Tx, params PaginationParams,
 	var risks []*model.Risk
 	for rows.Next() {
 		risk := &model.Risk{}
+		var il, ii, rl, ri *int
 		if err := rows.Scan(
 			&risk.ID, &risk.OrgID, &risk.Title, &risk.Description, &risk.Scenario,
-			&risk.Category, &risk.Source, &risk.InherentLikelihood, &risk.InherentImpact,
-			&risk.ResidualLikelihood, &risk.ResidualImpact, &risk.Status, &risk.OwnerID,
+			&risk.Category, &risk.Source, &il, &ii,
+			&rl, &ri, &risk.Status, &risk.OwnerID,
 			&risk.ApproverID, &risk.ReviewDate, &risk.LastReviewedBy,
 			&risk.CreatedAt, &risk.UpdatedAt,
 		); err != nil {
 			return nil, PaginationResult{}, err
+		}
+		if il != nil {
+			risk.InherentLikelihood = *il
+		}
+		if ii != nil {
+			risk.InherentImpact = *ii
+		}
+		if rl != nil {
+			risk.ResidualLikelihood = *rl
+		}
+		if ri != nil {
+			risk.ResidualImpact = *ri
 		}
 		risks = append(risks, risk)
 	}
@@ -264,6 +290,7 @@ func (r *RiskRepo) GetHeatmapData(ctx context.Context, tx pgx.Tx) ([]HeatmapCell
 	rows, err := tx.Query(ctx, `
 		SELECT residual_likelihood, residual_impact, COUNT(*)
 		FROM risks WHERE status NOT IN ('closed')
+		  AND residual_likelihood IS NOT NULL AND residual_impact IS NOT NULL
 		GROUP BY residual_likelihood, residual_impact
 	`)
 	if err != nil {

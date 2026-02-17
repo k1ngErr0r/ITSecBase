@@ -16,6 +16,7 @@ func NewIncidentRepo() *IncidentRepo {
 
 func (r *IncidentRepo) GetByID(ctx context.Context, tx pgx.Tx, id string) (*model.Incident, error) {
 	inc := &model.Incident{}
+	var impactRating *string
 	err := tx.QueryRow(ctx, `
 		SELECT id, org_id, name, area, description, impact_summary, impact_rating,
 		       classification, regulatory_breach, reporter_id, owner_id, status,
@@ -25,7 +26,7 @@ func (r *IncidentRepo) GetByID(ctx context.Context, tx pgx.Tx, id string) (*mode
 		FROM incidents WHERE id = $1
 	`, id).Scan(
 		&inc.ID, &inc.OrgID, &inc.Name, &inc.Area, &inc.Description,
-		&inc.ImpactSummary, &inc.ImpactRating, &inc.Classification, &inc.RegulatoryBreach,
+		&inc.ImpactSummary, &impactRating, &inc.Classification, &inc.RegulatoryBreach,
 		&inc.ReporterID, &inc.OwnerID, &inc.Status, &inc.RootCause, &inc.RootCauseCategory,
 		&inc.CorrectiveActions, &inc.PreventiveActions, &inc.DetectedAt, &inc.OpenedAt,
 		&inc.ContainedAt, &inc.ResolvedAt, &inc.ClosedAt, &inc.SLADeadline,
@@ -33,6 +34,9 @@ func (r *IncidentRepo) GetByID(ctx context.Context, tx pgx.Tx, id string) (*mode
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get incident: %w", err)
+	}
+	if impactRating != nil {
+		inc.ImpactRating = *impactRating
 	}
 	return inc, nil
 }
@@ -95,15 +99,19 @@ func (r *IncidentRepo) List(ctx context.Context, tx pgx.Tx, params PaginationPar
 	var incidents []*model.Incident
 	for rows.Next() {
 		inc := &model.Incident{}
+		var impactRating *string
 		if err := rows.Scan(
 			&inc.ID, &inc.OrgID, &inc.Name, &inc.Area, &inc.Description,
-			&inc.ImpactSummary, &inc.ImpactRating, &inc.Classification, &inc.RegulatoryBreach,
+			&inc.ImpactSummary, &impactRating, &inc.Classification, &inc.RegulatoryBreach,
 			&inc.ReporterID, &inc.OwnerID, &inc.Status, &inc.RootCause, &inc.RootCauseCategory,
 			&inc.CorrectiveActions, &inc.PreventiveActions, &inc.DetectedAt, &inc.OpenedAt,
 			&inc.ContainedAt, &inc.ResolvedAt, &inc.ClosedAt, &inc.SLADeadline,
 			&inc.CreatedAt, &inc.UpdatedAt,
 		); err != nil {
 			return nil, PaginationResult{}, err
+		}
+		if impactRating != nil {
+			inc.ImpactRating = *impactRating
 		}
 		incidents = append(incidents, inc)
 	}
@@ -136,7 +144,7 @@ func (r *IncidentRepo) Create(ctx context.Context, tx pgx.Tx, inc *model.Inciden
 			detected_at, sla_deadline
 		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
 		RETURNING id, opened_at, created_at, updated_at
-	`, inc.OrgID, inc.Name, inc.Area, inc.Description, inc.ImpactSummary, inc.ImpactRating,
+	`, inc.OrgID, inc.Name, inc.Area, inc.Description, inc.ImpactSummary, strOrNil(inc.ImpactRating),
 		inc.Classification, inc.RegulatoryBreach, inc.ReporterID, inc.OwnerID, inc.Status,
 		inc.DetectedAt, inc.SLADeadline,
 	).Scan(&inc.ID, &inc.OpenedAt, &inc.CreatedAt, &inc.UpdatedAt)

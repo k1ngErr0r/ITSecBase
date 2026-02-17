@@ -165,8 +165,12 @@ func (r *DrPlanRepo) ListTests(ctx context.Context, tx pgx.Tx, planID string) ([
 	var tests []*model.DrTest
 	for rows.Next() {
 		t := &model.DrTest{}
-		if err := rows.Scan(&t.ID, &t.DrPlanID, &t.TestType, &t.PlannedDate, &t.ActualDate, &t.Result, &t.Observations, &t.CreatedAt); err != nil {
+		var result *string
+		if err := rows.Scan(&t.ID, &t.DrPlanID, &t.TestType, &t.PlannedDate, &t.ActualDate, &result, &t.Observations, &t.CreatedAt); err != nil {
 			return nil, err
+		}
+		if result != nil {
+			t.Result = *result
 		}
 		tests = append(tests, t)
 	}

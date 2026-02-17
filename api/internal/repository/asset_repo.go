@@ -16,6 +16,8 @@ func NewAssetRepo() *AssetRepo {
 
 func (r *AssetRepo) GetByID(ctx context.Context, tx pgx.Tx, id string) (*model.Asset, error) {
 	a := &model.Asset{}
+	var criticality *int
+	var dataClassification *string
 	err := tx.QueryRow(ctx, `
 		SELECT id, org_id, name, asset_type, make, model, version,
 		       business_owner_id, technical_owner_id, ip_addresses, hostnames,
@@ -27,11 +29,17 @@ func (r *AssetRepo) GetByID(ctx context.Context, tx pgx.Tx, id string) (*model.A
 		&a.ID, &a.OrgID, &a.Name, &a.AssetType, &a.Make, &a.Model, &a.Version,
 		&a.BusinessOwnerID, &a.TechnicalOwnerID, &a.IPAddresses, &a.Hostnames,
 		&a.FQDN, &a.URL, &a.LocationSite, &a.LocationDetail, &a.Environment,
-		&a.Criticality, &a.DataClassification, &a.Tags, &a.Status,
+		&criticality, &dataClassification, &a.Tags, &a.Status,
 		&a.DecommissionDate, &a.CreatedAt, &a.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get asset: %w", err)
+	}
+	if criticality != nil {
+		a.Criticality = *criticality
+	}
+	if dataClassification != nil {
+		a.DataClassification = *dataClassification
 	}
 	return a, nil
 }
@@ -106,14 +114,22 @@ func (r *AssetRepo) List(ctx context.Context, tx pgx.Tx, params PaginationParams
 	var assets []*model.Asset
 	for rows.Next() {
 		a := &model.Asset{}
+		var criticality *int
+		var dataClassification *string
 		if err := rows.Scan(
 			&a.ID, &a.OrgID, &a.Name, &a.AssetType, &a.Make, &a.Model, &a.Version,
 			&a.BusinessOwnerID, &a.TechnicalOwnerID, &a.IPAddresses, &a.Hostnames,
 			&a.FQDN, &a.URL, &a.LocationSite, &a.LocationDetail, &a.Environment,
-			&a.Criticality, &a.DataClassification, &a.Tags, &a.Status,
+			&criticality, &dataClassification, &a.Tags, &a.Status,
 			&a.DecommissionDate, &a.CreatedAt, &a.UpdatedAt,
 		); err != nil {
 			return nil, PaginationResult{}, fmt.Errorf("scan asset: %w", err)
+		}
+		if criticality != nil {
+			a.Criticality = *criticality
+		}
+		if dataClassification != nil {
+			a.DataClassification = *dataClassification
 		}
 		assets = append(assets, a)
 	}
@@ -157,7 +173,7 @@ func (r *AssetRepo) Create(ctx context.Context, tx pgx.Tx, a *model.Asset) error
 	`, a.OrgID, a.Name, a.AssetType, a.Make, a.Model, a.Version,
 		a.BusinessOwnerID, a.TechnicalOwnerID, a.IPAddresses, a.Hostnames,
 		a.FQDN, a.URL, a.LocationSite, a.LocationDetail, a.Environment,
-		a.Criticality, a.DataClassification, a.Tags, a.Status,
+		intOrNil(a.Criticality), strOrNil(a.DataClassification), a.Tags, a.Status,
 	).Scan(&a.ID, &a.CreatedAt, &a.UpdatedAt)
 	if err != nil {
 		return fmt.Errorf("create asset: %w", err)
@@ -185,7 +201,7 @@ func (r *AssetRepo) Update(ctx context.Context, tx pgx.Tx, a *model.Asset) error
 	`, a.ID, a.Name, a.AssetType, a.Make, a.Model, a.Version,
 		a.BusinessOwnerID, a.TechnicalOwnerID, a.IPAddresses, a.Hostnames,
 		a.FQDN, a.URL, a.LocationSite, a.LocationDetail, a.Environment,
-		a.Criticality, a.DataClassification, a.Tags, a.Status,
+		intOrNil(a.Criticality), strOrNil(a.DataClassification), a.Tags, a.Status,
 	)
 	if err != nil {
 		return fmt.Errorf("update asset: %w", err)
@@ -216,14 +232,22 @@ func (r *AssetRepo) GetDependencies(ctx context.Context, tx pgx.Tx, assetID stri
 	var assets []*model.Asset
 	for rows.Next() {
 		a := &model.Asset{}
+		var criticality *int
+		var dataClassification *string
 		if err := rows.Scan(
 			&a.ID, &a.OrgID, &a.Name, &a.AssetType, &a.Make, &a.Model, &a.Version,
 			&a.BusinessOwnerID, &a.TechnicalOwnerID, &a.IPAddresses, &a.Hostnames,
 			&a.FQDN, &a.URL, &a.LocationSite, &a.LocationDetail, &a.Environment,
-			&a.Criticality, &a.DataClassification, &a.Tags, &a.Status,
+			&criticality, &dataClassification, &a.Tags, &a.Status,
 			&a.DecommissionDate, &a.CreatedAt, &a.UpdatedAt,
 		); err != nil {
 			return nil, err
+		}
+		if criticality != nil {
+			a.Criticality = *criticality
+		}
+		if dataClassification != nil {
+			a.DataClassification = *dataClassification
 		}
 		assets = append(assets, a)
 	}
