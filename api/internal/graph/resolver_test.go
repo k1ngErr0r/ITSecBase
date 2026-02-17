@@ -594,7 +594,8 @@ func TestGraphQL_DashboardQueries(t *testing.T) {
 	incResp := execGraphQL(t, handler, graphqlRequest{
 		Query: `query {
 			incidentStatus {
-				openCount slaBreaches
+				slaBreaches
+				openByImpact { impact count }
 			}
 		}`,
 	})

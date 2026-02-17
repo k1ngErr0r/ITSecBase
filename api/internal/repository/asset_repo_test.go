@@ -21,7 +21,7 @@ func TestAssetRepo_CreateAndGetByID(t *testing.T) {
 			AssetType:   "server",
 			Environment: "production",
 			Criticality: 3,
-			Status:      "active",
+			Status:      "in_use",
 			FQDN:        "test.example.com",
 		}
 		if err := repo.Create(ctx, tx, a); err != nil {
@@ -63,9 +63,9 @@ func TestAssetRepo_ListWithFilters(t *testing.T) {
 
 	err := testDB.WithTx(ctx, func(tx pgx.Tx) error {
 		assets := []*model.Asset{
-			{OrgID: orgID, Name: "Prod Server", AssetType: "server", Environment: "production", Status: "active"},
-			{OrgID: orgID, Name: "Dev DB", AssetType: "database", Environment: "development", Status: "active"},
-			{OrgID: orgID, Name: "Staging App", AssetType: "server", Environment: "staging", Status: "active"},
+			{OrgID: orgID, Name: "Prod Server", AssetType: "server", Environment: "production", Status: "in_use"},
+			{OrgID: orgID, Name: "Dev DB", AssetType: "database", Environment: "dev", Status: "in_use"},
+			{OrgID: orgID, Name: "Staging App", AssetType: "server", Environment: "staging", Status: "in_use"},
 		}
 		for _, a := range assets {
 			if err := repo.Create(ctx, tx, a); err != nil {
@@ -110,7 +110,7 @@ func TestAssetRepo_Update(t *testing.T) {
 	repo := NewAssetRepo()
 
 	err := testDB.WithTx(ctx, func(tx pgx.Tx) error {
-		a := &model.Asset{OrgID: orgID, Name: "Before", AssetType: "server", Status: "active"}
+		a := &model.Asset{OrgID: orgID, Name: "Before", AssetType: "server", Status: "in_use"}
 		if err := repo.Create(ctx, tx, a); err != nil {
 			return err
 		}
@@ -144,7 +144,7 @@ func TestAssetRepo_Delete(t *testing.T) {
 	repo := NewAssetRepo()
 
 	err := testDB.WithTx(ctx, func(tx pgx.Tx) error {
-		a := &model.Asset{OrgID: orgID, Name: "ToDelete", AssetType: "server", Status: "active"}
+		a := &model.Asset{OrgID: orgID, Name: "ToDelete", AssetType: "server", Status: "in_use"}
 		if err := repo.Create(ctx, tx, a); err != nil {
 			return err
 		}

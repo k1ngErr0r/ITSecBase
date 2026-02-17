@@ -102,7 +102,7 @@ func createTestAsset(t *testing.T, ctx context.Context, tx pgx.Tx, orgID, name s
 		OrgID:     orgID,
 		Name:      name,
 		AssetType: "server",
-		Status:    "active",
+		Status:    "in_use",
 	}
 	repo := NewAssetRepo()
 	if err := repo.Create(ctx, tx, a); err != nil {

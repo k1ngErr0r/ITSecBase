@@ -163,7 +163,7 @@ func (r *IncidentRepo) Update(ctx context.Context, tx pgx.Tx, inc *model.Inciden
 			preventive_actions=$14, contained_at=$15, resolved_at=$16, closed_at=$17,
 			sla_deadline=$18, updated_at=now()
 		WHERE id = $1
-	`, inc.ID, inc.Name, inc.Area, inc.Description, inc.ImpactSummary, inc.ImpactRating,
+	`, inc.ID, inc.Name, inc.Area, inc.Description, inc.ImpactSummary, strOrNil(inc.ImpactRating),
 		inc.Classification, inc.RegulatoryBreach, inc.OwnerID, inc.Status,
 		inc.RootCause, inc.RootCauseCategory, inc.CorrectiveActions,
 		inc.PreventiveActions, inc.ContainedAt, inc.ResolvedAt, inc.ClosedAt,

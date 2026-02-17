@@ -135,7 +135,7 @@ func TestIncidentRepo_ActionCRUD(t *testing.T) {
 
 		a := &model.IncidentAction{
 			IncidentID:  inc.ID,
-			ActionType:  "containment",
+			ActionType:  "corrective",
 			Description: "Block IP range",
 			Status:      "open",
 		}

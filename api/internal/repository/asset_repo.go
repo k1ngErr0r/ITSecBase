@@ -18,6 +18,7 @@ func (r *AssetRepo) GetByID(ctx context.Context, tx pgx.Tx, id string) (*model.A
 	a := &model.Asset{}
 	var criticality *int
 	var dataClassification *string
+	var environment *string
 	err := tx.QueryRow(ctx, `
 		SELECT id, org_id, name, asset_type, make, model, version,
 		       business_owner_id, technical_owner_id, ip_addresses, hostnames,
@@ -28,12 +29,15 @@ func (r *AssetRepo) GetByID(ctx context.Context, tx pgx.Tx, id string) (*model.A
 	`, id).Scan(
 		&a.ID, &a.OrgID, &a.Name, &a.AssetType, &a.Make, &a.Model, &a.Version,
 		&a.BusinessOwnerID, &a.TechnicalOwnerID, &a.IPAddresses, &a.Hostnames,
-		&a.FQDN, &a.URL, &a.LocationSite, &a.LocationDetail, &a.Environment,
+		&a.FQDN, &a.URL, &a.LocationSite, &a.LocationDetail, &environment,
 		&criticality, &dataClassification, &a.Tags, &a.Status,
 		&a.DecommissionDate, &a.CreatedAt, &a.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get asset: %w", err)
+	}
+	if environment != nil {
+		a.Environment = *environment
 	}
 	if criticality != nil {
 		a.Criticality = *criticality
@@ -116,14 +120,18 @@ func (r *AssetRepo) List(ctx context.Context, tx pgx.Tx, params PaginationParams
 		a := &model.Asset{}
 		var criticality *int
 		var dataClassification *string
+		var environment *string
 		if err := rows.Scan(
 			&a.ID, &a.OrgID, &a.Name, &a.AssetType, &a.Make, &a.Model, &a.Version,
 			&a.BusinessOwnerID, &a.TechnicalOwnerID, &a.IPAddresses, &a.Hostnames,
-			&a.FQDN, &a.URL, &a.LocationSite, &a.LocationDetail, &a.Environment,
+			&a.FQDN, &a.URL, &a.LocationSite, &a.LocationDetail, &environment,
 			&criticality, &dataClassification, &a.Tags, &a.Status,
 			&a.DecommissionDate, &a.CreatedAt, &a.UpdatedAt,
 		); err != nil {
 			return nil, PaginationResult{}, fmt.Errorf("scan asset: %w", err)
+		}
+		if environment != nil {
+			a.Environment = *environment
 		}
 		if criticality != nil {
 			a.Criticality = *criticality
@@ -172,7 +180,7 @@ func (r *AssetRepo) Create(ctx context.Context, tx pgx.Tx, a *model.Asset) error
 		RETURNING id, created_at, updated_at
 	`, a.OrgID, a.Name, a.AssetType, a.Make, a.Model, a.Version,
 		a.BusinessOwnerID, a.TechnicalOwnerID, a.IPAddresses, a.Hostnames,
-		a.FQDN, a.URL, a.LocationSite, a.LocationDetail, a.Environment,
+		a.FQDN, a.URL, a.LocationSite, a.LocationDetail, strOrNil(a.Environment),
 		intOrNil(a.Criticality), strOrNil(a.DataClassification), a.Tags, a.Status,
 	).Scan(&a.ID, &a.CreatedAt, &a.UpdatedAt)
 	if err != nil {
@@ -200,7 +208,7 @@ func (r *AssetRepo) Update(ctx context.Context, tx pgx.Tx, a *model.Asset) error
 		WHERE id = $1
 	`, a.ID, a.Name, a.AssetType, a.Make, a.Model, a.Version,
 		a.BusinessOwnerID, a.TechnicalOwnerID, a.IPAddresses, a.Hostnames,
-		a.FQDN, a.URL, a.LocationSite, a.LocationDetail, a.Environment,
+		a.FQDN, a.URL, a.LocationSite, a.LocationDetail, strOrNil(a.Environment),
 		intOrNil(a.Criticality), strOrNil(a.DataClassification), a.Tags, a.Status,
 	)
 	if err != nil {
@@ -234,14 +242,18 @@ func (r *AssetRepo) GetDependencies(ctx context.Context, tx pgx.Tx, assetID stri
 		a := &model.Asset{}
 		var criticality *int
 		var dataClassification *string
+		var environment *string
 		if err := rows.Scan(
 			&a.ID, &a.OrgID, &a.Name, &a.AssetType, &a.Make, &a.Model, &a.Version,
 			&a.BusinessOwnerID, &a.TechnicalOwnerID, &a.IPAddresses, &a.Hostnames,
-			&a.FQDN, &a.URL, &a.LocationSite, &a.LocationDetail, &a.Environment,
+			&a.FQDN, &a.URL, &a.LocationSite, &a.LocationDetail, &environment,
 			&criticality, &dataClassification, &a.Tags, &a.Status,
 			&a.DecommissionDate, &a.CreatedAt, &a.UpdatedAt,
 		); err != nil {
 			return nil, err
+		}
+		if environment != nil {
+			a.Environment = *environment
 		}
 		if criticality != nil {
 			a.Criticality = *criticality
