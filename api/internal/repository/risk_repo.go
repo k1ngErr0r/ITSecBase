@@ -121,6 +121,13 @@ func (r *RiskRepo) List(ctx context.Context, tx pgx.Tx, params PaginationParams,
 	return risks, result, nil
 }
 
+func intOrNil(v int) any {
+	if v == 0 {
+		return nil
+	}
+	return v
+}
+
 func (r *RiskRepo) Create(ctx context.Context, tx pgx.Tx, risk *model.Risk) error {
 	err := tx.QueryRow(ctx, `
 		INSERT INTO risks (
@@ -130,7 +137,7 @@ func (r *RiskRepo) Create(ctx context.Context, tx pgx.Tx, risk *model.Risk) erro
 		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
 		RETURNING id, created_at, updated_at
 	`, risk.OrgID, risk.Title, risk.Description, risk.Scenario, risk.Category, risk.Source,
-		risk.InherentLikelihood, risk.InherentImpact, risk.ResidualLikelihood, risk.ResidualImpact,
+		intOrNil(risk.InherentLikelihood), intOrNil(risk.InherentImpact), intOrNil(risk.ResidualLikelihood), intOrNil(risk.ResidualImpact),
 		risk.Status, risk.OwnerID, risk.ApproverID, risk.ReviewDate,
 	).Scan(&risk.ID, &risk.CreatedAt, &risk.UpdatedAt)
 	return err
@@ -145,7 +152,7 @@ func (r *RiskRepo) Update(ctx context.Context, tx pgx.Tx, risk *model.Risk) erro
 			updated_at=now()
 		WHERE id = $1
 	`, risk.ID, risk.Title, risk.Description, risk.Scenario, risk.Category, risk.Source,
-		risk.InherentLikelihood, risk.InherentImpact, risk.ResidualLikelihood, risk.ResidualImpact,
+		intOrNil(risk.InherentLikelihood), intOrNil(risk.InherentImpact), intOrNil(risk.ResidualLikelihood), intOrNil(risk.ResidualImpact),
 		risk.Status, risk.OwnerID, risk.ApproverID, risk.ReviewDate, risk.LastReviewedBy,
 	)
 	return err

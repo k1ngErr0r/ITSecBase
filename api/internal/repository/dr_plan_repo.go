@@ -128,11 +128,18 @@ func (r *DrPlanRepo) Delete(ctx context.Context, tx pgx.Tx, id string) error {
 
 // Tests
 
+func strOrNil(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
 func (r *DrPlanRepo) CreateTest(ctx context.Context, tx pgx.Tx, t *model.DrTest) error {
 	err := tx.QueryRow(ctx, `
 		INSERT INTO dr_tests (dr_plan_id, test_type, planned_date, actual_date, result, observations)
 		VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at
-	`, t.DrPlanID, t.TestType, t.PlannedDate, t.ActualDate, t.Result, t.Observations,
+	`, t.DrPlanID, t.TestType, t.PlannedDate, t.ActualDate, strOrNil(t.Result), t.Observations,
 	).Scan(&t.ID, &t.CreatedAt)
 	return err
 }
@@ -141,7 +148,7 @@ func (r *DrPlanRepo) UpdateTest(ctx context.Context, tx pgx.Tx, t *model.DrTest)
 	_, err := tx.Exec(ctx, `
 		UPDATE dr_tests SET test_type=$2, planned_date=$3, actual_date=$4, result=$5, observations=$6
 		WHERE id=$1
-	`, t.ID, t.TestType, t.PlannedDate, t.ActualDate, t.Result, t.Observations)
+	`, t.ID, t.TestType, t.PlannedDate, t.ActualDate, strOrNil(t.Result), t.Observations)
 	return err
 }
 

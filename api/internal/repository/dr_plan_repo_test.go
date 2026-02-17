@@ -185,7 +185,7 @@ func TestDrPlanRepo_TestCRUD(t *testing.T) {
 			DrPlanID:     p.ID,
 			TestType:     "tabletop",
 			PlannedDate:  &planned,
-			Result:       "pending",
+			Result:       "",
 			Observations: "Initial plan",
 		}
 		if err := repo.CreateTest(ctx, tx, dt); err != nil {
@@ -205,7 +205,7 @@ func TestDrPlanRepo_TestCRUD(t *testing.T) {
 
 		now := time.Now()
 		dt.ActualDate = &now
-		dt.Result = "passed"
+		dt.Result = "pass"
 		dt.Observations = "All objectives met"
 		if err := repo.UpdateTest(ctx, tx, dt); err != nil {
 			return err
@@ -215,8 +215,8 @@ func TestDrPlanRepo_TestCRUD(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if tests2[0].Result != "passed" {
-			t.Errorf("Result = %q, want %q", tests2[0].Result, "passed")
+		if tests2[0].Result != "pass" {
+			t.Errorf("Result = %q, want %q", tests2[0].Result, "pass")
 		}
 		return nil
 	})

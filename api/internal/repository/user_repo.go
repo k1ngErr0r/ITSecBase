@@ -57,7 +57,7 @@ func (r *UserRepo) List(ctx context.Context, tx pgx.Tx, params PaginationParams,
 		return nil, PaginationResult{}, err
 	}
 
-	where := "WHERE 1=1"
+	where := "WHERE org_id = current_setting('app.current_org_id', true)::uuid"
 	args := []any{}
 	argIdx := 1
 

@@ -581,7 +581,7 @@ func TestGraphQL_DashboardQueries(t *testing.T) {
 	// Vulnerability overview
 	vulnResp := execGraphQL(t, handler, graphqlRequest{
 		Query: `query {
-			vulnerabilityOverview {
+			vulnOverview {
 				totalOpen criticalCount highCount
 			}
 		}`,
@@ -593,7 +593,7 @@ func TestGraphQL_DashboardQueries(t *testing.T) {
 	// Incident summary
 	incResp := execGraphQL(t, handler, graphqlRequest{
 		Query: `query {
-			incidentSummary {
+			incidentStatus {
 				openCount slaBreaches
 			}
 		}`,

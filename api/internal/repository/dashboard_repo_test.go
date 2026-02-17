@@ -105,10 +105,10 @@ func TestDashboardRepo_GetDrReadiness(t *testing.T) {
 		past := time.Now().Add(-24 * time.Hour)
 		dt := &model.DrTest{
 			DrPlanID:    p.ID,
-			TestType:    "full",
+			TestType:    "full_failover",
 			PlannedDate: &past,
 			ActualDate:  &past,
-			Result:      "passed",
+			Result:      "pass",
 		}
 		if err := drRepo.CreateTest(ctx, tx, dt); err != nil {
 			return err
@@ -189,7 +189,16 @@ func TestDashboardRepo_LayoutSaveAndGet(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if string(got) != string(layout) {
+		var gotJSON, wantJSON any
+		if err := json.Unmarshal(got, &gotJSON); err != nil {
+			return err
+		}
+		if err := json.Unmarshal(layout, &wantJSON); err != nil {
+			return err
+		}
+		gotBytes, _ := json.Marshal(gotJSON)
+		wantBytes, _ := json.Marshal(wantJSON)
+		if string(gotBytes) != string(wantBytes) {
 			t.Errorf("layout = %s, want %s", got, layout)
 		}
 
@@ -202,7 +211,16 @@ func TestDashboardRepo_LayoutSaveAndGet(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if string(got2) != string(layout2) {
+		var got2JSON, want2JSON any
+		if err := json.Unmarshal(got2, &got2JSON); err != nil {
+			return err
+		}
+		if err := json.Unmarshal(layout2, &want2JSON); err != nil {
+			return err
+		}
+		got2Bytes, _ := json.Marshal(got2JSON)
+		want2Bytes, _ := json.Marshal(want2JSON)
+		if string(got2Bytes) != string(want2Bytes) {
 			t.Errorf("updated layout = %s, want %s", got2, layout2)
 		}
 		return nil

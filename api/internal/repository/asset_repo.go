@@ -137,6 +137,15 @@ func (r *AssetRepo) List(ctx context.Context, tx pgx.Tx, params PaginationParams
 }
 
 func (r *AssetRepo) Create(ctx context.Context, tx pgx.Tx, a *model.Asset) error {
+	if a.IPAddresses == nil {
+		a.IPAddresses = []string{}
+	}
+	if a.Hostnames == nil {
+		a.Hostnames = []string{}
+	}
+	if a.Tags == nil {
+		a.Tags = []string{}
+	}
 	err := tx.QueryRow(ctx, `
 		INSERT INTO assets (
 			org_id, name, asset_type, make, model, version,
@@ -157,6 +166,15 @@ func (r *AssetRepo) Create(ctx context.Context, tx pgx.Tx, a *model.Asset) error
 }
 
 func (r *AssetRepo) Update(ctx context.Context, tx pgx.Tx, a *model.Asset) error {
+	if a.IPAddresses == nil {
+		a.IPAddresses = []string{}
+	}
+	if a.Hostnames == nil {
+		a.Hostnames = []string{}
+	}
+	if a.Tags == nil {
+		a.Tags = []string{}
+	}
 	_, err := tx.Exec(ctx, `
 		UPDATE assets SET
 			name=$2, asset_type=$3, make=$4, model=$5, version=$6,

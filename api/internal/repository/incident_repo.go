@@ -126,6 +126,9 @@ func (r *IncidentRepo) List(ctx context.Context, tx pgx.Tx, params PaginationPar
 }
 
 func (r *IncidentRepo) Create(ctx context.Context, tx pgx.Tx, inc *model.Incident) error {
+	if inc.Classification == nil {
+		inc.Classification = []string{}
+	}
 	err := tx.QueryRow(ctx, `
 		INSERT INTO incidents (
 			org_id, name, area, description, impact_summary, impact_rating,
@@ -141,6 +144,9 @@ func (r *IncidentRepo) Create(ctx context.Context, tx pgx.Tx, inc *model.Inciden
 }
 
 func (r *IncidentRepo) Update(ctx context.Context, tx pgx.Tx, inc *model.Incident) error {
+	if inc.Classification == nil {
+		inc.Classification = []string{}
+	}
 	_, err := tx.Exec(ctx, `
 		UPDATE incidents SET
 			name=$2, area=$3, description=$4, impact_summary=$5, impact_rating=$6,
