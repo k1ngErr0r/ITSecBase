@@ -607,7 +607,7 @@ func TestGraphQL_DashboardQueries(t *testing.T) {
 	drResp := execGraphQL(t, handler, graphqlRequest{
 		Query: `query {
 			drReadiness {
-				activePlans lastTestResult
+				lastTestResult playbookVersion
 			}
 		}`,
 	})
